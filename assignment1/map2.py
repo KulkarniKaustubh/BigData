@@ -6,7 +6,7 @@ import datetime
 
 word="aircraft carrier"
 k = 100
-def bad(record):
+def isnotbad(record):
 	word = record["word"]
 	code = record["countrycode"]
 	recognised = record["recognized"]
@@ -45,20 +45,16 @@ def bad(record):
 	return True
 
 def eucledian_dist(arr):
-	dist = pow( pow(arr[0][0],2) + pow(arr[1][0],2) , 0.5)
+	dist = pow( (pow(arr[0][0],2) + pow(arr[1][0],2)) , 0.5)
 	return dist
 
 for line in sys.stdin:
 		j=json.loads(line)
 		drawing = j["drawing"]
-		if(bad(j)):
+		if(isnotbad(j)):
 			if(j["word"]==word): #check to see if its the word we want
 				dist = eucledian_dist(drawing[0])
 				if(dist > k):
 					print("%s\t%d" %(j["countrycode"], 1))
 
-#What's left
-"""
-- Not sure how to cal eucledian distance
-- Take inputs from command line , later point of time
-"""
+

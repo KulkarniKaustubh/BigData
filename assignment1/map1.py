@@ -5,7 +5,7 @@ import json
 import datetime
 
 word="aircraft carrier"
-def bad(record):
+def isnotbad(record):
 	word = record["word"]
 	code = record["countrycode"]
 	recognised = record["recognized"]
@@ -46,7 +46,7 @@ def bad(record):
 for line in sys.stdin:
         j=json.loads(line)
         #checking if it is the word we are looking for
-        if bad(j)==True:
+        if isnotbad(j)==True:
         
                 if j["word"]==word:
                         # checking if word is recognized
@@ -64,8 +64,3 @@ for line in sys.stdin:
                                         print("%s\t%s" %(j["recognized"],1))
           
 
-
-
-
-
-#"2017-03-08 21:12:07.26604 UTC"

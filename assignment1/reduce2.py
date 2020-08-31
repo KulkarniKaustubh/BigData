@@ -24,8 +24,3 @@ for line in sys.stdin:
 for word in country.keys():
     print('%s,%s'% ( word, country[word])) 
     
-
-#What's left
-"""
-- Not sure how to arrange in ascending order
-"""

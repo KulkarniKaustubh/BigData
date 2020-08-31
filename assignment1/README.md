@@ -11,7 +11,7 @@ python3 reduce2.py < test.txt
 ### Whats left !?
 - [ ] Hadoop streaming 
 - [ ] Taking in variables from cmd line (not hardcoding)
-- [ ] Verify if eucledian dist func, is implemented the way they want it
+- [x] Verify if eucledian dist func, is implemented the way they want it
 - [ ] Fix True/False o/p from reducer1
 - [ ] Sort the o/p  of reducer2
 - [ ] Verify bad record function
