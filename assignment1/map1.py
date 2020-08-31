@@ -4,7 +4,9 @@ import sys
 import json
 import datetime
 
-word="aircraft carrier"
+#word="aircraft carrier"
+if(sys.argv[1]):
+	word = sys.argv[1]
 def isnotbad(record):
 	word = record["word"]
 	code = record["countrycode"]

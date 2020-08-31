@@ -3,14 +3,16 @@
 Dataset ---> [link](https://drive.google.com/drive/folders/10xfNXqxSpF_aHyhoo8dizGXUAxhOw_Va)
 
 ### Python Execution
-```
-python3 map2.py < plane_carriers.ndjson > test.txt  
+``` 
+python3 map1.py aircraft\ carrier < plane_carriers.ndjson  > test.txt  
+python3 reduce1.py < test.txt  
+python3 map2.py 'aircraft carrier' 100 < plane_carriers.ndjson > test.txt  
 python3 reduce2.py < test.txt
 ```
 
 ### Whats left !?
 - [ ] Hadoop streaming 
-- [ ] Taking in variables from cmd line (not hardcoding)
+- [x] Taking in variables from cmd line (not hardcoding)
 - [x] Verify if eucledian dist func, is implemented the way they want it
 - [ ] Fix True/False o/p from reducer1
 - [ ] Sort the o/p  of reducer2
