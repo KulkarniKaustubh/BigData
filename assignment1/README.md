@@ -22,15 +22,19 @@ $ python3 reduce2.py < test.txt
 
 ### Hadoop Execution 
 ```sh
-$ bin/hadoop jar $HADOOP_STREAM -mapper 'python3 /home/<....>/BigData/assignment1/map1.py airplane' -reducer 'python3 /home/<....>/BigData/assignment1/reduce1.py' -input input/plane_carriers.ndjson -output output/task1
+$ bin/hadoop jar $HADOOP_STREAM -mapper 'python3 /home/<....>/BigData/assignment1/map1.py airplane' -reducer 'python3 /home/<....>/BigData/assignment1/reduce1.py' -input input/plane_carriers.ndjson -output output/task1_1
 
-$ bin/hadoop jar $HADOOP_STREAM -mapper 'python3 /home/<....>/BigData/assignment1/map2.py airplane 100' -reducer 'python3 /home/<....>/BigData/assignment1/reduce2.py' -input input/plane_carriers.ndjson -output output/task2   
+$ bin/hadoop jar $HADOOP_STREAM -mapper 'python3 /home/<....>/BigData/assignment1/map2.py airplane 100' -reducer 'python3 /home/<....>/BigData/assignment1/reduce2.py' -input input/plane_carriers.ndjson -output output/task2_1  
+
+$ bin/hadoop jar $HADOOP_STREAM -mapper "python3 /home/<....>/BigData/assignment1/map1.py 'aircraft carrier'" -reducer 'python3 /home/<....>/BigData/assignment1/reduce1.py' -input input/plane_carriers.ndjson -output output/task1_2  
+
+$ bin/hadoop jar $HADOOP_STREAM -mapper "python3 /home/<....>/BigData/assignment1/map2.py 'aircraft carrier' 100" -reducer 'python3 /home/<....>/BigData/assignment1/reduce1.py' -input input/plane_carriers.ndjson -output output/task1_2 
 ```
 
 
 - To view o/p in browser open ```http://localhost:9870/explorer.html#/``` and navigate to your output dir.
 - To delete the o/p file ```$ bin/hadoop fs -rm -r output/task1```
-
+- start ```sbin/start-dfs.sh```, stop ```sbin/stop-dfs.sh```
 
 ### Whats left !?
 - [x] Hadoop streaming
