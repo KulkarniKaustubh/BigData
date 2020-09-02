@@ -28,13 +28,13 @@ $ bin/hadoop jar $HADOOP_STREAM -mapper 'python3 /home/<....>/BigData/assignment
 
 $ bin/hadoop jar $HADOOP_STREAM -mapper "python3 /home/<....>/BigData/assignment1/map1.py 'aircraft carrier'" -reducer 'python3 /home/<....>/BigData/assignment1/reduce1.py' -input input/plane_carriers.ndjson -output output/task1_2  
 
-$ bin/hadoop jar $HADOOP_STREAM -mapper "python3 /home/<....>/BigData/assignment1/map2.py 'aircraft carrier' 100" -reducer 'python3 /home/<....>/BigData/assignment1/reduce1.py' -input input/plane_carriers.ndjson -output output/task1_2 
+$ bin/hadoop jar $HADOOP_STREAM -mapper "python3 /home/<....>/BigData/assignment1/map2.py 'aircraft carrier' 100" -reducer 'python3 /home/<....>/BigData/assignment1/reduce2.py' -input input/plane_carriers.ndjson -output output/task2_2 
 ```
 
 
 - To view o/p in browser open ```http://localhost:9870/explorer.html#/``` and navigate to your output dir.
 - To delete the o/p file ```$ bin/hadoop fs -rm -r output/task1```
-- start ```sbin/start-dfs.sh```, stop ```sbin/stop-dfs.sh```
+- start ```sbin/start-dfs.sh```, stop ```sbin/stop-dfs.sh```, view ```jps```
 
 ### Whats left !?
 - [x] Hadoop streaming
@@ -43,4 +43,5 @@ $ bin/hadoop jar $HADOOP_STREAM -mapper "python3 /home/<....>/BigData/assignment
 - [x] Fix True/False o/p from reducer1 (automatically taken care)
 - [x] Sort the o/p  of reducer2 (automatically taken care)
 - [ ] Verify bad record function
+- [ ] Cross verify outputs
 
