@@ -42,6 +42,6 @@ $ bin/hadoop jar $HADOOP_STREAM -mapper "python3 /home/<....>/BigData/assignment
 - [x] Verify if eucledian dist func, is implemented the way they want it
 - [x] Fix True/False o/p from reducer1 (automatically taken care)
 - [x] Sort the o/p  of reducer2 (automatically taken care)
-- [ ] Verify bad record function
-- [ ] Cross verify outputs
+- [x] Verify bad record function
+- [x] Cross verify outputs
 
