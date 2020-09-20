@@ -14,4 +14,4 @@ for line in sys.stdin:
 
 
 for key in adj_list_dict:
-    print(key, 1/adj_list_dict[key], sep=", ",end="\n")
+    print(key, 1, sep=", ",end="\n")
