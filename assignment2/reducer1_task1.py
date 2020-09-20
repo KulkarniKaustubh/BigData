@@ -1,4 +1,3 @@
-from operator import itemgetter
 import sys
 
 adj_list_dict = dict()
@@ -7,10 +6,10 @@ for line in sys.stdin:
     line = line.strip()
     from_node, to_node = line.split('\t')
 
-    if int(from_node) not in adj_list_dict:
-        adj_list_dict[int(from_node)] = [int(to_node)]
+    if from_node not in adj_list_dict:          # if from_node not already in dict create a list with the to_node
+        adj_list_dict[from_node] = [to_node]
     else:
-        adj_list_dict[int(from_node)].append(int(to_node))
+        adj_list_dict[from_node].append(to_node) # if from_node already in dictionary append to node to its list
 
 
 for key in adj_list_dict:
