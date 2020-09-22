@@ -20,5 +20,6 @@ v_file = open(path, "w")
 if v_file:
     for key in adj_list_dict:
         # writes lines of adj_list to stdout
+        adj_list_dict[key].sort() #sorting list
         print(key, adj_list_dict[key], sep="\t", end="\n")
         v_file.write('{},1\n'.format(key))  # writes lines of V to file
