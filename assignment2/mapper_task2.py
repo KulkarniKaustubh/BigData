@@ -32,7 +32,7 @@ for line in sys.stdin:
 	n=len(value)
 	
 	add=rank_vector[key]/n 
-	add=float("{:.2f}".format(add)) #calculating contribution of key to every node it points to 
+	 #calculating contribution of key to every node it points to 
 	
 	
 	for val in value: # updating sum of contributions
@@ -43,6 +43,7 @@ for line in sys.stdin:
 			new_vector[val]+=add
 
 for key in new_vector:
+	#new_vector[key]=round(new_vector[key],5)
 	print(key,new_vector[key],sep=',') #printing
 	
 	
