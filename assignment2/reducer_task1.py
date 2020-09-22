@@ -17,8 +17,8 @@ for line in sys.stdin:
         adj_list_dict[from_node].append(to_node)
 
 v_file = open(path, "w")
-
-for key in adj_list_dict:
-    # writes lines of adj_list to stdout
-    print(key, adj_list_dict[key], sep="\t", end="\n")
-    v_file.write('{},1\n'.format(key))  # writes lines of V to file
+if v_file:
+    for key in adj_list_dict:
+        # writes lines of adj_list to stdout
+        print(key, adj_list_dict[key], sep="\t", end="\n")
+        v_file.write('{},1\n'.format(key))  # writes lines of V to file
