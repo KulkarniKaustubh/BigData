@@ -19,21 +19,23 @@ if v_file:
 		if key not in rank_vector:
 			rank_vector[key]=float(value) # the rank is updated
 
-new_vector=dict() # will hold the
+new_vector=dict() # will hold the sum of contributions of each node that links to respective key
 for line in sys.stdin:
 	
 	line = line.strip()
 	key,value=line.split('\t')
 	
-	value=value.strip('[')
+	value=value.strip('[') # processing string
 	value=value.strip(']')
 	
-	value=value.split(',')
+	value=value.split(',') # converting to list
 	n=len(value)
 	
-	add=rank_vector[key]/n
+	add=rank_vector[key]/n 
+	add=float("{:.2f}".format(add)) #calculating contribution of key to every node it points to 
 	
-	for val in value:
+	
+	for val in value: # updating sum of contributions
 		val=val.strip()
 		if val not in new_vector:
 			new_vector[val]=add
@@ -41,6 +43,6 @@ for line in sys.stdin:
 			new_vector[val]+=add
 
 for key in new_vector:
-	print(key,new_vector[key],sep=',')
+	print(key,new_vector[key],sep=',') #printing
 	
 	
