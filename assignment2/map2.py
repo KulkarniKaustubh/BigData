@@ -6,6 +6,7 @@ if sys.argv[1]:
     path = sys.argv[1]  # will hold the path to the file v
 
 rank_vector=dict() # will hold current page rank  
+new_vector=dict() # will hold the sum of contributions of each node that links to respective key
 
 v_file=open(path,"r")
 
@@ -18,8 +19,8 @@ if v_file:
 		key,value=line.split(',')
 		if key not in rank_vector:
 			rank_vector[key]=float(value) # the rank is updated
-
-new_vector=dict() # will hold the sum of contributions of each node that links to respective key
+		new_vector[key]=0
+#print(new_vector)
 for line in sys.stdin:
 	
 	line = line.strip()
@@ -37,11 +38,11 @@ for line in sys.stdin:
 	
 	for val in value: # updating sum of contributions
 		val=val.strip()
-		if val not in new_vector:
-			new_vector[val]=add
-		else:
+		val=val.strip('\'')
+		
+		if val in new_vector:
 			new_vector[val]+=add
-
+#print(new_vector)
 for key in new_vector:
 	#new_vector[key]=round(new_vector[key],5)
 	print(key,new_vector[key],sep=',') #printing
