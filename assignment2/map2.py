@@ -20,6 +20,7 @@ if v_file:
 		if key not in rank_vector:
 			rank_vector[key]=float(value) # the rank is updated
 		new_vector[key]=0
+v_file.close()
 #print(new_vector)
 for line in sys.stdin:
 	
