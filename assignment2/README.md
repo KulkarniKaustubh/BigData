@@ -1,7 +1,7 @@
 # Page Rank Algorithm implementation with Map Reduce
 
 ### Execution
-Ensure that you have a input, output dir under /user/(username). The same can be achieved by :
+Ensure that you have an input, output dir under /user/(username). The same can be achieved by :
 ```sh
 $ $HADOOP_HOME/bin/hdfs dfs -mkdir /user
 $ $HADOOP_HOME/bin/hdfs dfs -mkdir /user/(desired username)
