@@ -1,17 +1,27 @@
 # Page Rank Algorithm implementation with Map Reduce
 
 ### Execution
-Note: <b>Run run1.sh once</b>, and <b>run run2.sh iteratively </b>. This is only a test script to run a bunch of commands at a time. If you get the error, file cannot be executed, just chmod the permission.
+Ensure thet you have a input, output dir under /user/(username). The same can be achieved by :
 ```sh
-$ sh run1.sh  
-$ sh run2.sh  
+$ $HADOOP_HOME/bin/hdfs dfs -mkdir /user
+$ $HADOOP_HOME/bin/hdfs dfs -mkdir /user/(desired username)
+$ $HADOOP_HOME/bin/hdfs dfs -mkdir input
+$ $HADOOP_HOME/bin/hdfs dfs -mkdir output
 ```
+After this fix all paths in iterate-hadoop.sh.
+You may hve to modify the commands if in case the same commands doesn't work for the hadoop version you hve installed.
+Then run :
+```sh
+$ sh iterate-hadoop.sh
+```
+Open <b>localhost:9870</b> to browse hdfs and see o/p.
 
 
 ### Whats left !?
 - [x] Basic outline of task1 and task2
 - [x] Hadoop streaming of task1 and task2
-- [ ] take care of key error
-- [ ] run the hadoop script, successfully (currently runs for 1 iteration)
+- [x] Take care of key error
+- [x] Run the hadoop script, successfully
+- [ ] Verify output, number of iterations
 
 
