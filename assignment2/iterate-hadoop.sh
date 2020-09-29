@@ -2,6 +2,7 @@
 CONVERGE=1
 rm v* log*
 
+count=1
 $HADOOP_HOME/bin/hadoop dfsadmin -safemode leave
 $HADOOP_HOME/bin/hadoop fs -rm -r output/output* 
 
@@ -23,6 +24,9 @@ do
 	$HADOOP_HOME/bin/hadoop fs -cat output/output2/* > /home/<**** INSERT PATH ****>/BigData/assignment2/v1
 	CONVERGE=$(python3 check_conv.py >&1)
 	$HADOOP_HOME/bin/hadoop fs -rm -r output/output2
+	echo "\n\nIteration: \c";echo $count 
+	count=`expr $count + 1`
 	echo $CONVERGE
+	echo "\n\n"
 
 done
