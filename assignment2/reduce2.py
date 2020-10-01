@@ -13,11 +13,13 @@ for line in sys.stdin:
 		
 		if current!=None:
 			add=0.15+(0.85*add) # calculating new rank
+			add=round(add,5)
 			add="{:.5f}".format(add)
 			print(current,add,sep=', ')
 		current=k
 		add=float(v)
 if current==k:
 	add=0.15+(0.85*add)
+	add=round(add,5)
 	add="{:.5f}".format(add)
 	print(current,add,sep=', ')
