@@ -12,16 +12,16 @@ for line in sys.stdin:
 	else:
 		
 		if current!=None:
-			add=0.15+(0.85*add) # calculating new rank
-			add=round(add,5)
+			#add=0.15+(0.85*add) # calculating new rank
+			#add=round(add,5)
 			#add=float(str(add)[:7])
-			add="{:.5f}".format(add)
-			print(current,add,sep=', ')
+			new="{0:.5f}".format(0.15+(0.85*add))
+			print(current,new,sep=', ')
 		current=k
 		add=float(v)
 if current==k:
-	add=0.15+(0.85*add)
-	add=round(add,5)
+	#add=0.15+(0.85*add)
+	#add=round(add,5)
 	#add=float(str(add)[:7])
-	add="{:.5f}".format(add)
-	print(current,add,sep=', ')
+	new="{0:.5f}".format(0.15+(0.85*add))
+	print(current,new,sep=', ')
