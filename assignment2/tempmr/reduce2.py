@@ -3,6 +3,8 @@ import sys
 from functools import reduce
 
 vect_nodes = {}
+def ret_fin(x):
+	return 0.15+(0.85*x)
 
 for line in sys.stdin:
 	line = line.strip()
@@ -11,11 +13,12 @@ for line in sys.stdin:
 	v = float(v)
 	if(k not in vect_nodes):
 		vect_nodes[k] = []
+		vect_nodes[k].append(v)
 
-	vect_nodes[k].append(v)
+	else:
+		vect_nodes[k].append(v)
 
 
 for node in sorted(vect_nodes):
-	add = reduce((lambda a,b: a+b), vect_nodes[node])
-	new = "{0:.5f}".format(0.15+(0.85*add))
+	new = "{0:.5f}".format(ret_fin(reduce((lambda a,b: a+b), vect_nodes[node])))
 	print(node,str(new),sep=', ')
