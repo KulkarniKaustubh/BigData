@@ -31,4 +31,5 @@ for line in sys.stdin:
 	source_contrib = 1/n
 	for node in adj:
 		if node in rank_vector:
-			print('%s\t%s'%(str(node), str(source_contrib*rank_vector[key])))
+			ans = source_contrib*rank_vector[key]
+			print('%s\t%s'%(str(node), str(ans)))
