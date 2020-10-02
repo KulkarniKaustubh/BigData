@@ -16,7 +16,7 @@ for line in sys.stdin:
 	if prev_from_node and prev_from_node != from_node:
 		adj_list.sort()
 		print(f'{prev_from_node}\t{adj_list}')
-		v_file.write(f'{prev_from_node},1\n')
+		v_file.write(f'{prev_from_node}, 1\n')
 		adj_list = []
 
 	prev_from_node = from_node
@@ -24,6 +24,6 @@ for line in sys.stdin:
 	
 if prev_from_node:
 	print(f'{prev_from_node}\t{adj_list}')
-	v_file.write(f'{prev_from_node},1\n')
+	v_file.write(f'{prev_from_node}, 1\n')
 	
 v_file.close()

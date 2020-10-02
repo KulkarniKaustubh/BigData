@@ -16,7 +16,7 @@ if v_file:
 	
 	for line in lines:
 		line=line.strip()
-		key,value=line.split(',')
+		key,value=line.split(', ')
 		if key not in rank_vector:
 			rank_vector[key]=float(value) # the rank is updated
 		new_vector[key]=0

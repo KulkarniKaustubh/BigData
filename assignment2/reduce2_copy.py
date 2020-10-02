@@ -12,7 +12,7 @@ for line in sys.stdin:
 
 	if prev_k and prev_k != k:
 		new="{0:.5f}".format(0.15+(0.85*add))
-		print(f'{prev_k},{new}')
+		print(f'{prev_k}, {new}')
 		add = 0
 
 	prev_k = k
@@ -20,4 +20,4 @@ for line in sys.stdin:
 
 if prev_k:
 	new="{0:.5f}".format(0.15+(0.85*add))
-	print(f'{prev_k},{new}')
+	print(f'{prev_k}, {new}')
