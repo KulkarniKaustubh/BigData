@@ -20,6 +20,6 @@ for line in sys.stdin:
 
 	prev_from_node = from_node
 	adj_list.append(to_node)
-
-print(f'{prev_from_node}\t{adj_list}')
-v_file.write(f'{prev_from_node}, 1\n')
+if prev_from_node:
+	print(f'{prev_from_node}\t{adj_list}')
+	v_file.write(f'{prev_from_node}, 1\n')
