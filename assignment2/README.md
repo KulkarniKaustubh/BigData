@@ -22,6 +22,6 @@ Open <b>localhost:9870</b> to browse hdfs and see o/p.
 - [x] Hadoop streaming of task1 and task2
 - [x] Take care of key error
 - [x] Run the hadoop script, successfully
-- [ ] Verify output, number of iterations
+- [x] Verify output, number of iterations
 
 
