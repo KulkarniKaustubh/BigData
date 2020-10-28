@@ -16,9 +16,9 @@ spark = SparkSession.builder.master("local[1]").appName("task1").getOrCreate()
 #data= spark.read.format("csv").option("header","False").load(path)
 data=spark.read.csv(path)#.rdd.map(list).cache()
 
-print(type(data.select('_c0')))
+#print(type(data.select('_c0')))
 print("--"*20)
-print(data.select('_c0').show())
+print(data.show())
 print("--"*20)
 
 """
