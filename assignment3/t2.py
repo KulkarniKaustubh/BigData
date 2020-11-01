@@ -39,7 +39,7 @@ for i in mappedRdd2.first(): # stores indices of each column
 	ind+=1
 '''
 columns1
-{'word': 0, 'timestamp': 1, 'reccognized': 2, 'key_id': 3, 'Total_Strokes': 4}
+{'word': 0, 'timestamp': 1, 'recognized': 2, 'key_id': 3, 'Total_Strokes': 4}
 
 columns2
 {'word': 0, 'countrycode': 1, 'key_id': 2}
@@ -62,7 +62,7 @@ fil_joinrdd
 
 
 wordRdd = fil_joinrdd.filter(lambda x: x[0][columns1['word']] == word)
-un_recRdd = wordRdd.filter(lambda x: x[0][columns1['reccognized']] == 'False')
+un_recRdd = wordRdd.filter(lambda x: x[0][columns1['recognized']] == 'False')
 
 '''
 un_recRdd (only contains recognized = false and word = word )

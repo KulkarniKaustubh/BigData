@@ -1,4 +1,4 @@
-word,timestamp,reccognized,key_id,Total_Strokes
+word,timestamp,recognized,key_id,Total_Strokes
 alarm clock,2017-03-28 20:20:50.81058 UTC,True,4665167562407936,7
 alarm clock,2017-03-15 11:33:11.55904 UTC,True,5535398652542976,10
 alarm clock,2017-01-31 07:49:46.46151 UTC,True,4567518247124992,24
