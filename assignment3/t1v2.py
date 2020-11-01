@@ -37,6 +37,6 @@ unrecRdd=wordRdd.filter(lambda x: x[columns['recognized']]=='False') #filters ou
 avg_strokes_recRdd=recRdd.map(lambda x : int(x[columns['Total_Strokes']])).mean() #calculates the avg strokes for recognized == True
 avg_strokes_unrecRdd=unrecRdd.map(lambda x : int(x[columns['Total_Strokes']])).mean() #calculates the avg strokes for recognized == False
 
-print(avg_strokes_recRdd.round(5))
-print(avg_strokes_unrecRdd.round(5))
+print("{0:.5f}".format(avg_strokes_recRdd))
+print("{0:.5f}".format(avg_strokes_unrecRdd))
 
