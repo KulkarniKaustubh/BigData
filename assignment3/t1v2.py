@@ -5,8 +5,8 @@ word=''
 if sys.argv[1]:
 	word=sys.argv[1]
 path=''
-if sys.argv[2]: # might have to change it to argv[3]
-	path=sys.argv[2]
+if sys.argv[3]: # might have to change it to argv[3]
+	path=sys.argv[3]
 
 fil=path
 sc=SparkContext('local',"task1")
