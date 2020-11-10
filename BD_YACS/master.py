@@ -128,3 +128,100 @@ with socket(AF_INET, SOCK_STREAM) as s:
 	message=json.dumps(send_task)
 	s.send(message.encode())
 '''
+
+
+
+'''
+
+def listen_updates():
+
+    #opening this will make port 5001 active and recieve updates from worker.py
+    update = socket(AF_INET, SOCK_STREAM) #init a TCP socket
+    update.bind(('', 5001))
+    update.listen()
+    print("Master ready to recieve task updates from worker.py")
+
+    while(true):
+
+        connectionSocket, addr = update.accept()
+        message = connectionSocket.recv(2048) # recieve max of 2048 bytes
+        mssg = json.loads(message)
+
+        # taking in the necessary values inorder to increase the slot count and to check if a job has finished executing.
+
+        task_id = mssg['task_id']
+        worker_id = mssg['worker_id']
+
+        job_id = task_id.split('_')[0]
+        
+
+        if '_M' in task_id: # The task that got completed is a map task
+
+            for job in j:
+            
+                if(job.jobid == job_id): # Finding the parent job of the map task
+                    
+                    for m_task in job.map_tasks:
+                        
+                        if m_task.taskid == task_id: 
+                            m_task.done = True # Updating the map task's done to True
+                            job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
+                            break
+
+                break
+
+        else:
+
+            for job in j:
+            
+                if(job.jobid == job_id): # Finding the parent job of the reduce task
+                    
+                    for r_task in job.reduce_tasks:
+                        
+                        if r_task.taskid == task_id:
+                            r_task.done = True # Updating the reduce task's done to True
+                            job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
+                            break
+
+                break
+
+
+        for worker in workers:
+            if worker.id == worker_id:
+                worker.slot += 1 # Since the task got completed, we are deallocating the slot that had been used by the task.
+
+
+        # To check if the entire job is done
+        flag = True
+
+        for job in j:
+
+            if(job.jobid == job_id):
+
+                for m_task in job.map_tasks:
+                    if m_task.done == False: # If even one of the map task's done == False, the job isn't done yet.
+                        flag = False
+                        break
+                
+                if flag == True:
+
+                    for r_task in job.reduce_tasks:
+                        if r_task.done == False: # If even one of the reduce task's done == False, the job isn't done yet.
+                            flag = False
+                            break
+
+                break
+
+        
+        if Flag == True: # This implies all the tasks of the job are complete
+
+            for job in j:
+
+                if(job.jobid == job_id):
+                    job.job_done = True # Updating the job's done to True
+                    print('Job ', job_id, ' was processed successfully', end = '\n')
+                    break
+
+update.close()
+
+'''
