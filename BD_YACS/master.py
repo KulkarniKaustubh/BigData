@@ -38,21 +38,24 @@ class task:
 		self.done = False
 	def print(self):
 		print("taskid: ", self.taskid, "  duration: ", self.duration, "   status: ", self.done)
+	def to_json(self):
+		temp = {"task_id": self.taskid, "duration":self.duration, "done":self.done}
+		return temp 
 
 class job:
 	def __init__(self, jobid):
 		self.jobid = jobid
 		self.map_tasks = []
 		self.reduce_tasks = []
-		self.map_tasks_done = False #true when all map_tasks don
-		self.reduce_tasks_done = False #Truse when all reduce tasks done
+		self.map_tasks_done = 0 #count number of map_task.done == True
+		self.reduce_tasks_done = 0 #count number of red_task.done == True
 		self.job_done = False #true only when (map_tasks_done = True and reduce_tasks_done = True)
 	def print(self):
 		print("Job          : ", self.jobid, "    status: ", self.job_done)
-		print("map_tasks    : ", len(self.map_tasks),"       status: ", self.map_tasks_done)
+		print("map_tasks    : ", len(self.map_tasks),"       map_task_done: ", self.map_tasks_done)
 		for i in self.map_tasks:
 			i.print()
-		print("reduce_tasks : ", len(self.reduce_tasks),"       status: ", self.reduce_tasks_done)
+		print("reduce_tasks : ", len(self.reduce_tasks),"       red_task_done: ", self.reduce_tasks_done)
 		for i in self.reduce_tasks:
 			i.print()
 
@@ -116,3 +119,12 @@ for i in range(num_jobs):
 	print('---------------------------------')
 	jobs[i].print()
 
+
+'''
+#to talk to worker.py
+with socket(AF_INET, SOCK_STREAM) as s:
+	s.connect(("localhost", 4000))
+	send_task = task.to_json(jobs[0].map_tasks[0])
+	message=json.dumps(send_task)
+	s.send(message.encode())
+'''
