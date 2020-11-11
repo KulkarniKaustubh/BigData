@@ -198,17 +198,15 @@ def listen_updates():
 
             if(job.jobid == job_id):
 
-                for m_task in job.map_tasks:
-                    if m_task.done == False: # If even one of the map task's done == False, the job isn't done yet.
-                        flag = False
-                        break
+                if job.map_tasks_done != len(job.map_tasks): # If the map task counts don't match, the job isn't done yet.
+                    flag = False
+                    break
                 
                 if flag == True:
 
-                    for r_task in job.reduce_tasks:
-                        if r_task.done == False: # If even one of the reduce task's done == False, the job isn't done yet.
-                            flag = False
-                            break
+                    if job.reduce_tasks_done != len(job.reduce_tasks): # If the reduce task counts don't match, the job isn't done yet.
+                        flag = False
+                        break
 
                 break
 
@@ -223,5 +221,7 @@ def listen_updates():
                     break
 
 update.close()
+
+
 
 '''
