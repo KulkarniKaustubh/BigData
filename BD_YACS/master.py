@@ -1,6 +1,6 @@
 import json
 import sys
-from socket import * 
+from socket import *
 
 try:
 	config_path = sys.argv[1]
@@ -40,7 +40,7 @@ class task:
 		print("taskid: ", self.taskid, "  duration: ", self.duration, "   status: ", self.done)
 	def to_json(self):
 		temp = {"task_id": self.taskid, "duration":self.duration, "done":self.done}
-		return temp 
+		return temp
 
 class job:
 	def __init__(self, jobid):
@@ -84,7 +84,7 @@ print("Master ready to recieve job requests from requests.py")
 k = 0 #as of for now only 3, dont know how to take as many as needed
 
 while(k!=3):
-	connectionSocket, addr = request.accept() 
+	connectionSocket, addr = request.accept()
 	message = connectionSocket.recv(2048) # recieve max of 2048 bytes
 	print("Received job request from: ", addr)
 	mssg = json.loads(message)
@@ -103,7 +103,7 @@ request.close()
 
 #bruteforce
 i = '{"job_id": "0", "map_tasks": [{"task_id": "0_M0", "duration": 2}, {"task_id": "0_M1", "duration": 4}, {"task_id": "0_M2", "duration": 3}, {"task_id": "0_M3", "duration": 4}], "reduce_tasks": [{"task_id": "0_R0", "duration": 1}]}'
-mssg = json.loads(i) 
+mssg = json.loads(i)
 j = job(mssg['job_id']) #init a job
 for maps_i in mssg['map_tasks']:
 	j.map_tasks.append(task(maps_i['task_id'], maps_i['duration'])) #append all map_tasks of a job, by initing task
@@ -121,12 +121,54 @@ for i in range(num_jobs):
 
 
 '''
-#to talk to worker.py
-with socket(AF_INET, SOCK_STREAM) as s:
-	s.connect(("localhost", 4000))
-	send_task = task.to_json(jobs[0].map_tasks[0])
-	message=json.dumps(send_task)
-	s.send(message.encode())
+if schedule_algo == 'RANDOM':
+	while True:
+		# listen_updates()
+
+		i = random.randrange(0, len(workers))
+
+		if workers[i].occupied_slots < workers[i].slot:
+			# code to send task
+			# code to update occupied_slots of worker
+			break
+
+if schedule_algo == 'RR':
+	workers = sorted(workers, key=lambda worker: worker.id)
+	num_workers = len(workers)
+	i = 0
+
+	while True:
+		# listen_updates()
+
+		if workers[i].occupied_slots < workers[i].slot:
+			# code to send task
+			# code to update occupied_slots of worker
+			break
+
+		i = (i + 1)%(num_workers - 1)
+
+if schedule_algo == 'LL':
+	while True:
+		# listen_updates()
+
+		least_loaded = sorted(workers, lambda worker: worker.slot - worker.occupied_slots)
+
+		if least_loaded[0].occupied_slots < least_loaded[0].slot:
+			# code to send task
+			# code to update occupied_slots of worker
+			break
+
+		time.sleep(1)
+
+'''
+
+'''
+def send_task(port):
+	with socket(AF_INET, SOCK_STREAM) as s:
+		s.connect(("localhost", port))
+		send_task = task.to_json(jobs[0].map_tasks[0])
+		message=json.dumps(send_task)
+		s.send(message.encode())
 '''
 
 
@@ -153,10 +195,10 @@ def listen_updates():
 
 		if '_M' in task_id: # The task that got completed is a map task
 
-			for job in j:            
-				if(job.jobid == job_id): # Finding the parent job of the map task                    
-					for m_task in job.map_tasks:                        
-						if m_task.taskid == task_id: 
+			for job in j:
+				if(job.jobid == job_id): # Finding the parent job of the map task
+					for m_task in job.map_tasks:
+						if m_task.taskid == task_id:
 							m_task.done = True # Updating the map task's done to True
 							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
 							break
@@ -165,9 +207,9 @@ def listen_updates():
 
 		else:
 
-			for job in j:            
-				if(job.jobid == job_id): # Finding the parent job of the reduce task                    
-					for r_task in job.reduce_tasks:                        
+			for job in j:
+				if(job.jobid == job_id): # Finding the parent job of the reduce task
+					for r_task in job.reduce_tasks:
 						if r_task.taskid == task_id:
 							r_task.done = True # Updating the reduce task's done to True
 							job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
