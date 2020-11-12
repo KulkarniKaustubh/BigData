@@ -220,7 +220,7 @@ def listen_updates():
 
 		for worker in workers:
 			if worker.id == worker_id:
-				worker.slot += 1 # Since the task got completed, we are deallocating the slot that had been used by the task.
+				worker.occupied_slots -= 1 # Since the task got completed, the slot that was occupied with this task will be free now.
 
 
 		# To check if the entire job is done
