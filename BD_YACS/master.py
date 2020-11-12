@@ -26,6 +26,7 @@ class worker:
 	def __init__(self, wid, slot, port):
 		self.id = wid
 		self.slot = slot
+		self.occupied_slots = 0
 		self.port = port
 	def print(self):
 		print(self.id, self.slot, self.port, sep=', ')
