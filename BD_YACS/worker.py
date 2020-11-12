@@ -1,7 +1,7 @@
 import json
 import sys
 from socket import * 
-
+import time
 
 try:
 	port = int(sys.argv[1])
@@ -38,3 +38,5 @@ while(1):
 	print("Received job request from: ", addr)
 	mssg = json.loads(message)
 	print(mssg)
+
+time.sleep(10)

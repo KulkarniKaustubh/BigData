@@ -1,6 +1,9 @@
 import json
 import sys
 from socket import *
+import time 
+import random
+import threading
 
 try:
 	config_path = sys.argv[1]
@@ -76,44 +79,72 @@ for  i in workers:
 num_workers = len(workers)
 print('Workers init ended......')
 
-'''
-#opening this will make port 5000 active and recieve requests from requests.py
-request = socket(AF_INET,SOCK_STREAM) #init a TCP socket
-request.bind(('',5000)) #listen on port 5000, from requests.py
-request.listen(3)
-print("Master ready to recieve job requests from requests.py")
-k = 0 #as of for now only 3, dont know how to take as many as needed
 
-while(k!=3):
-	connectionSocket, addr = request.accept()
-	message = connectionSocket.recv(2048) # recieve max of 2048 bytes
-	print("Received job request from: ", addr)
-	mssg = json.loads(message)
+def RANDOM_algo():
+	while(1):
+		i = random.randrange(0, len(workers))
+		if(workers[i].occupied_slots < workers[i].slot):
+			return i
 
+def listen_to_requests():
+	#opening this will make port 5000 active and recieve requests from requests.py
+	request = socket(AF_INET,SOCK_STREAM) #init a TCP socket
+	request.bind(('',5000)) #listen on port 5000, from requests.py
+	request.listen(3)
+	print("Master ready to recieve job requests from requests.py")
+	k = 0 #as of for now only 3, dont know how to take as many as needed
+
+	while(k!=3):
+		connectionSocket, addr = request.accept()
+		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
+		print("Received job request from: ", addr)
+		mssg = json.loads(message)
+
+		j = job(mssg['job_id']) #init a job
+		for maps_i in mssg['map_tasks']:
+			j.map_tasks.append(task(maps_i['task_id'], maps_i['duration'])) #append all map_tasks of a job, by initing task
+		for reds_i in mssg['reduce_tasks']:
+			j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
+		jobs.append(j) #add to list of jobs
+		k += 1
+
+	request.close()
+
+	'''
+	#hardcode
+	i = '{"job_id": "0", "map_tasks": [{"task_id": "0_M0", "duration": 2}, {"task_id": "0_M1", "duration": 4}, {"task_id": "0_M2", "duration": 3}, {"task_id": "0_M3", "duration": 4}], "reduce_tasks": [{"task_id": "0_R0", "duration": 1}]}'
+	mssg = json.loads(i)
 	j = job(mssg['job_id']) #init a job
 	for maps_i in mssg['map_tasks']:
 		j.map_tasks.append(task(maps_i['task_id'], maps_i['duration'])) #append all map_tasks of a job, by initing task
 	for reds_i in mssg['reduce_tasks']:
 		j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
-	jobs.append(j) #add to list of jobs
-	k += 1
+	jobs.append(j)
+	#hardcode
+	'''
 
-request.close()
+
+def send_task_to_worker():
+	i = RANDOM_algo()
+	#port = workers[i].port #eventually do this
+	port = 4001
+	with socket(AF_INET, SOCK_STREAM) as s:
+		s.connect(("localhost", port))
+		send_task = task.to_json(jobs[0].map_tasks[0])
+		message=json.dumps(send_task)
+		s.send(message.encode())
+
 '''
+t1 = threading.Thread(target=listen_to_requests) 
+t2 = threading.Thread(target=send_task_to_worker) 
 
-
-#bruteforce
-i = '{"job_id": "0", "map_tasks": [{"task_id": "0_M0", "duration": 2}, {"task_id": "0_M1", "duration": 4}, {"task_id": "0_M2", "duration": 3}, {"task_id": "0_M3", "duration": 4}], "reduce_tasks": [{"task_id": "0_R0", "duration": 1}]}'
-mssg = json.loads(i)
-j = job(mssg['job_id']) #init a job
-for maps_i in mssg['map_tasks']:
-	j.map_tasks.append(task(maps_i['task_id'], maps_i['duration'])) #append all map_tasks of a job, by initing task
-for reds_i in mssg['reduce_tasks']:
-	j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
-jobs.append(j)
-#bruteforce
-
-
+t1.start()
+t2.start()
+t1.join()
+t2.join()
+'''
+listen_to_requests()
+send_task_to_worker()
 
 num_jobs = len(jobs)
 for i in range(num_jobs):
@@ -234,3 +265,5 @@ def listen_updates():
 				break
 update.close()
 '''
+
+time.sleep(20)

@@ -4,7 +4,7 @@ import time
 import sys
 import random
 import numpy as np
-
+import time
 def create_job_request(job_id):
 	number_of_map_tasks=random.randrange(1,5)
 	number_of_reduce_tasks=random.randrange(1,3)
@@ -52,5 +52,5 @@ if __name__ == '__main__':
 		last_request_time=time.time()
 		request_number+=1
 
-
+time.sleep(10)
 
