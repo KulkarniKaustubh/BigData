@@ -1,11 +1,17 @@
 # YACS - Yet Another Centralized Scheduler
 
 ### Execution
-Run on 2 diff terminals  
+Run on 3+2 diff terminals  
 
 ```sh
-python3 master.py config.json RR
+python3 worker.py 4001 1
+python3 master.py config.json RANDOM
 python3 requests.py 3 
+```
+or just execute(as of for now, script tested on ubuntu)  
+
+```sh
+sh run.sh
 ```
 
 ### Ports 
