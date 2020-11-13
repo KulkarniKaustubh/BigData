@@ -132,7 +132,7 @@ def listen_updates():
 
 		if '_M' in task_id: # The task that got completed is a map task
 
-			for job in j:
+			for job in jobs:
 				if(job.jobid == job_id): # Finding the parent job of the map task
 					for m_task in job.map_tasks:
 						if m_task.taskid == task_id:
@@ -144,7 +144,7 @@ def listen_updates():
 
 		else:
 
-			for job in j:
+			for job in jobs:
 				if(job.jobid == job_id): # Finding the parent job of the reduce task
 					for r_task in job.reduce_tasks:
 						if r_task.taskid == task_id:
@@ -160,7 +160,7 @@ def listen_updates():
 
 
 		# To check if the entire job is done
-		for job in j:
+		for job in jobs:
 
 			if(job.jobid == job_id): #searching for job_id
 				if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)):
@@ -209,6 +209,7 @@ t2.join()
 '''
 listen_to_requests()
 send_task_to_worker()
+listen_updates()
 
 num_jobs = len(jobs)
 for i in range(num_jobs):

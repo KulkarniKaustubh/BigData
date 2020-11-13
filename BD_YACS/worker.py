@@ -35,7 +35,9 @@ class task:
 		self.workerid = workerid
 	def print(self):
 		print("jobid: ",self.jobid, "workerid: ", self.workerid, "taskid: ", self.taskid, "  duration: ", self.duration, "  done: ", self.done)
-
+	def to_json(self):
+		temp = {"jobid": self.jobid, "workerid": self.workerid, "taskid": self.taskid, "duration":self.duration, "done":self.done}
+		return temp
 """ class definitions are over """
 
 
@@ -99,7 +101,8 @@ def task_out(send_task):#take a task as input to send it through .send
 	with socket(AF_INET, SOCK_STREAM) as s:
 		s.connect(("localhost", 5001))
 		print("###---sending update to master---###")
-		#send_task = task.to_json(jobs[0].map_tasks[0])      ### won't work as of now ...till master is ready to accept updates.
+		#generalise the below line
+		send_task = task.to_json(exe_pool[0])      ### won't work as of now ...till master is ready to accept updates.
 		message=json.dumps(send_task)
 		s.send(message.encode())
 		print('done...')
