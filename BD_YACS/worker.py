@@ -4,6 +4,9 @@ from socket import *
 import time
 import threading
 
+
+
+""" parsing arguments"""
 try:
 	port = int(sys.argv[1])
 except IndexError:
@@ -17,7 +20,11 @@ except IndexError:
 	print("Worker id not passed")
 	print("Exiting ......")
 	exit()
+""" done"""
 
+
+
+""" class definitions """
 
 class task:
 	def __init__(self, taskid, duration, jobid, workerid):
@@ -29,20 +36,29 @@ class task:
 	def print(self):
 		print("jobid: ",self.jobid, "workerid: ", self.workerid, "taskid: ", self.taskid, "  duration: ", self.duration, "  done: ", self.done)
 
+""" class definitions are over """
 
+
+
+""" Shared variable definitions """
 exe_pool = []
+""" done """
+
+
+""" initialising TCP socket """
 task_in_socket = socket(AF_INET,SOCK_STREAM) #init a TCP socket
 task_in_socket.bind(('',port)) #listen on port 5000, from requests.py
 task_in_socket.listen(3)
+""" done """
 
 """
 All semaphores are defined here
 """
 lock=threading.Semaphore(1)
-
 """
 Semaphore definitions end
 """
+
 
 print("Worker ready to recieve tasks from master.py")
 
@@ -72,6 +88,9 @@ def task_in():
 
 """listener code ends"""
 
+
+
+
 """updater code"""
 def task_out(send_task):#take a task as input to send it through .send
 	'''send_task.done=True
@@ -85,6 +104,9 @@ def task_out(send_task):#take a task as input to send it through .send
 		s.send(message.encode())
 		print('done...')
 """updater code ends"""
+
+
+
 
 """executor code"""
 def task_exec():
@@ -110,6 +132,8 @@ def task_exec():
 			print('-'*60)
 			
 """executor code ends"""
+
+
 
 ''' Running worker'''
 listening_thread=threading.Thread(target=task_in)
