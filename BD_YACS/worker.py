@@ -124,6 +124,7 @@ def task_exec():
 			if task.duration==0:
 				print(f"Task {task.taskid} has finished execution")
 				#task_out(send_task)
+				task.done = True
 				updater_thread=threading.Thread(target=task_out,args=(task,))
 				updater_thread.start()
 				

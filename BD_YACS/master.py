@@ -125,6 +125,7 @@ def listen_updates():
 		mssg = json.loads(message)
 
 		# taking in the necessary values inorder to increase the slot count and to check if a job has finished executing.
+		print(mssg)
 		task_id = mssg['taskid']
 		worker_id = mssg['workerid']
 
@@ -140,6 +141,7 @@ def listen_updates():
 							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
 							break
 
+				jobs[0].print() #added this to check i real task.done is getting updated
 				break
 
 		else:
