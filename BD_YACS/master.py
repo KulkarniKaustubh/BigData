@@ -110,6 +110,67 @@ def listen_to_requests():
 
 	request.close()
 
+
+def listen_updates():
+	#opening this will make port 5001 active and recieve updates from worker.py
+	update = socket(AF_INET, SOCK_STREAM) #init a TCP socket
+	update.bind(('', 5001))
+	update.listen(3)
+	print("Master ready to recieve task updates from worker.py")
+
+	while(1):
+
+		connectionSocket, addr = update.accept()
+		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
+		mssg = json.loads(message)
+
+		# taking in the necessary values inorder to increase the slot count and to check if a job has finished executing.
+		task_id = mssg['taskid']
+		worker_id = mssg['workerid']
+
+		job_id = task_id.split('_')[0]
+
+		if '_M' in task_id: # The task that got completed is a map task
+
+			for job in j:
+				if(job.jobid == job_id): # Finding the parent job of the map task
+					for m_task in job.map_tasks:
+						if m_task.taskid == task_id:
+							m_task.done = True # Updating the map task's done to True
+							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
+							break
+
+				break
+
+		else:
+
+			for job in j:
+				if(job.jobid == job_id): # Finding the parent job of the reduce task
+					for r_task in job.reduce_tasks:
+						if r_task.taskid == task_id:
+							r_task.done = True # Updating the reduce task's done to True
+							job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
+							break
+				break
+
+
+		for worker in workers:
+			if worker.id == worker_id:
+				worker.occupied_slots -= 1 # Since the task got completed, the slot that was occupied with this task will be free now.
+
+
+		# To check if the entire job is done
+		for job in j:
+
+			if(job.jobid == job_id): #searching for job_id
+				if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)):
+					job.job_done = True # Updating the job's done to True
+					print('Job ', job_id, ' was processed successfully', end = '\n')
+
+				break
+
+	update.close()
+
 	'''
 	#hardcode
 	i = '{"job_id": "0", "map_tasks": [{"task_id": "0_M0", "duration": 2}, {"task_id": "0_M1", "duration": 4}, {"task_id": "0_M2", "duration": 3}, {"task_id": "0_M3", "duration": 4}], "reduce_tasks": [{"task_id": "0_R0", "duration": 1}]}'
@@ -216,15 +277,15 @@ def listen_updates():
 	update.listen()
 	print("Master ready to recieve task updates from worker.py")
 
-	while(true):
+	while(1):
 
 		connectionSocket, addr = update.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
 		mssg = json.loads(message)
 
 		# taking in the necessary values inorder to increase the slot count and to check if a job has finished executing.
-		task_id = mssg['task_id']
-		worker_id = mssg['worker_id']
+		task_id = mssg['taskid']
+		worker_id = mssg['workerid']
 
 		job_id = task_id.split('_')[0]
 
@@ -266,7 +327,7 @@ def listen_updates():
 					print('Job ', job_id, ' was processed successfully', end = '\n')
 
 				break
-update.close()
+	update.close()
 '''
 
 time.sleep(10)
