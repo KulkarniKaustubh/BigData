@@ -42,8 +42,8 @@ class task:
 		self.done = False
 	def print(self):
 		print("taskid: ", self.taskid, "  duration: ", self.duration, "   status: ", self.done)
-	def to_json(self):
-		temp = {"task_id": self.taskid, "duration":self.duration, "done":self.done}
+	def to_json(self, jobid, workerid):
+		temp = {"jobid": jobid, "workerid": workerid, "taskid": self.taskid, "duration":self.duration, "done":self.done}
 		return temp
 
 class job:
@@ -125,14 +125,17 @@ def listen_to_requests():
 
 
 def send_task_to_worker():
+	#call this under listen_to_worker since they are in the same thread
 	i = RANDOM_algo()
 	#port = workers[i].port #eventually do this
+	# need to decrement the slot of worker
 	port = 4001
 	with socket(AF_INET, SOCK_STREAM) as s:
 		s.connect(("localhost", port))
-		send_task = task.to_json(jobs[0].map_tasks[0])
+		send_task = task.to_json(jobs[0].map_tasks[0], jobs[0].jobid, 1)
 		message=json.dumps(send_task)
 		s.send(message.encode())
+
 
 '''
 t1 = threading.Thread(target=listen_to_requests) 
@@ -266,4 +269,4 @@ def listen_updates():
 update.close()
 '''
 
-time.sleep(20)
+time.sleep(10)
