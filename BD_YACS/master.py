@@ -45,26 +45,26 @@ class worker:
 
 
 class task:
-	def __init__(self, taskid, duration):
-		self.taskid = taskid
+	def __init__(self, task_id, duration):
+		self.task_id = task_id
 		self.duration = duration
 		self.done = False
 	def print(self):
-		print("taskid: ", self.taskid, "  duration: ", self.duration, "   status: ", self.done)
-	def to_json(self, jobid, workerid):
-		temp = {"jobid": jobid, "workerid": workerid, "taskid": self.taskid, "duration":self.duration, "done":self.done}
+		print("task_id: ", self.task_id, "  duration: ", self.duration, "   status: ", self.done)
+	def to_json(self, job_id, worker_id):
+		temp = {"job_id": job_id, "worker_id": worker_id, "task_id": self.task_id, "duration":self.duration, "done":self.done}
 		return temp
 
 class job:
-	def __init__(self, jobid):
-		self.jobid = jobid
+	def __init__(self, job_id):
+		self.job_id = job_id
 		self.map_tasks = []
 		self.reduce_tasks = []
 		self.map_tasks_done = 0 #count number of map_task.done == True
 		self.reduce_tasks_done = 0 #count number of red_task.done == True
 		self.job_done = False #true only when (map_tasks_done = True and reduce_tasks_done = True)
 	def print(self):
-		print("Job          : ", self.jobid, "    status: ", self.job_done)
+		print("Job          : ", self.job_id, "    status: ", self.job_done)
 		print("map_tasks    : ", len(self.map_tasks),"       map_task_done: ", self.map_tasks_done)
 		for i in self.map_tasks:
 			i.print()
@@ -144,9 +144,9 @@ def scheduling_algo():
 def send_task_to_worker(task,job_id):
 	#call this under listen_to_worker since they are in the same thread
 	i = scheduling_algo()
-	port = workers[i].port #eventually do this
+	# port = workers[i].port #eventually do this
 	# need to decrement the slot of worker
-	# port = 4001
+	port = 4000
 	with socket(AF_INET, SOCK_STREAM) as s:
 		s.connect(("localhost", port))
 		send_task = task.to_json(job_id, i)
@@ -164,7 +164,7 @@ def listen_to_requests():
 	while True:
 		connectionSocket, addr = request.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
-		print("Received job request from: ", addr)
+		print("Received job request from requests.py : ", addr)
 		mssg = json.loads(message)
 
 		lock.acquire()
@@ -177,14 +177,14 @@ def listen_to_requests():
 
 		if j.map_tasks_done == len(j.map_tasks):
 			for t in j.reduce_tasks:
-				# send_task_to_worker(t, j.jobid)
-				sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.jobid,))
+				# send_task_to_worker(t, j.job_id)
+				sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.job_id,))
 				sender_thread.start()
 				sender_thread.join()
 		else:
 			for t in j.map_tasks:
-				# send_task_to_worker(t, j.jobid)
-				sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.jobid,))
+				# send_task_to_worker(t, j.job_id)
+				sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.job_id,))
 				sender_thread.start()
 				sender_thread.join()
 		lock.release()
@@ -198,7 +198,7 @@ def listen_updates():
 	update.listen(3)
 	print("Master ready to recieve task updates from worker.py")
 
-	while(1):
+	while True:
 
 		connectionSocket, addr = update.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
@@ -207,17 +207,17 @@ def listen_updates():
 		lock.acquire()
 		# taking in the necessary values inorder to increase the slot count and to check if a job has finished executing.
 		print(mssg)
-		task_id = mssg['taskid']
-		worker_id = mssg['workerid']
+		task_id = mssg['task_id']
+		worker_id = mssg['worker_id']
 
 		job_id = task_id.split('_')[0]
 
 		if '_M' in task_id: # The task that got completed is a map task
 
 			for job in jobs:
-				if(job.jobid == job_id): # Finding the parent job of the map task
+				if(job.job_id == job_id): # Finding the parent job of the map task
 					for m_task in job.map_tasks:
-						if m_task.taskid == task_id:
+						if m_task.task_id == task_id:
 							m_task.done = True # Updating the map task's done to True
 							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
 							break
@@ -228,9 +228,9 @@ def listen_updates():
 		else:
 
 			for job in jobs:
-				if(job.jobid == job_id): # Finding the parent job of the reduce task
+				if(job.job_id == job_id): # Finding the parent job of the reduce task
 					for r_task in job.reduce_tasks:
-						if r_task.taskid == task_id:
+						if r_task.task_id == task_id:
 							r_task.done = True # Updating the reduce task's done to True
 							job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
 							break
@@ -245,7 +245,7 @@ def listen_updates():
 		# To check if the entire job is done
 		for job in jobs:
 
-			if(job.jobid == job_id): #searching for job_id
+			if(job.job_id == job_id): #searching for job_id
 				if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)):
 					job.job_done = True # Updating the job's done to True
 					print('Job ', job_id, ' was processed successfully', end = '\n')

@@ -26,17 +26,17 @@ except IndexError:
 
 """ class definitions """
 
-class task:
-	def __init__(self, taskid, duration, jobid, workerid):
-		self.taskid = taskid
+class Task:
+	def __init__(self, task_id, duration, job_id, worker_id):
+		self.task_id = task_id
 		self.duration = duration
 		self.done = False
-		self.jobid = jobid
-		self.workerid = workerid
+		self.job_id = job_id
+		self.worker_id = worker_id
 	def print(self):
-		print("jobid: ",self.jobid, "workerid: ", self.workerid, "taskid: ", self.taskid, "  duration: ", self.duration, "  done: ", self.done)
+		print("job_id: ",self.job_id, "worker_id: ", self.worker_id, "task_id: ", self.task_id, "  duration: ", self.duration, "  done: ", self.done)
 	def to_json(self):
-		temp = {"jobid": self.jobid, "workerid": self.workerid, "taskid": self.taskid, "duration":self.duration, "done":self.done}
+		temp = {"job_id": self.job_id, "worker_id": self.worker_id, "task_id": self.task_id, "duration":self.duration, "done":self.done}
 		return temp
 """ class definitions are over """
 
@@ -56,7 +56,7 @@ task_in_socket.listen(3)
 """
 All semaphores are defined here
 """
-lock=threading.Semaphore(1)
+lock = threading.Semaphore(1)
 """
 Semaphore definitions end
 """
@@ -69,17 +69,23 @@ print(f"Worker {work_id} ready to recieve tasks from master.py")
 listener code
 """
 def task_in():
-	while(1):
+	thread_dict = {}
+
+	while True:
 		connectionSocket, addr = task_in_socket.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
-		print("Received job request from: ", addr)
+		print()
 		mssg = json.loads(message)
 		#this will apend the task to exe pool
-		sample_test = task(mssg['taskid'], mssg['duration'], mssg['jobid'], mssg['workerid'])
+		received_task = Task(mssg['task_id'], mssg['duration'], mssg['job_id'], mssg['worker_id'])
 
-		lock.acquire()
-		exe_pool.append(sample_test)
-		lock.release()
+		print(f"Received task {received_task.task_id} from : ", addr)
+
+		# lock.acquire()
+		# exe_pool.append(received_task)
+		thread_dict[f"{received_task.task_id}"] = threading.Thread(target = task_exec, args = (received_task,))
+		thread_dict[f"{received_task.task_id}"].start()
+		# lock.release()
 
 		#sample_test.print()
 		#this is a dummy line to mimic completion of the task
@@ -94,56 +100,75 @@ def task_in():
 
 
 """updater code"""
-def task_out(send_task):#take a task as input to send it through .send
-	'''send_task.done=True
-	print("here")						    ### use this as of now
-	send_task.print()'''
+def task_out(task): # take a task as input to send it through .send
 	with socket(AF_INET, SOCK_STREAM) as s:
 		s.connect(("localhost", 5001))
-		print("###---sending update to master---###")
+
+		print(f"Sending {task.task_id} completed to master")
 		#generalise the below line
-		send_task = task.to_json(exe_pool[0])      ### won't work as of now ...till master is ready to accept updates.
-		message=json.dumps(send_task)
+
+		task.to_json()
+
+		message = json.dumps(task)
 		s.send(message.encode())
-		print('done...')
+
+		print(f"Sent task {task.task_id} completed...")
+
+	# with socket(AF_INET, SOCK_STREAM) as s:
+	# 	s.connect(("localhost", 5001))
+	# 	print("Sending update to master")
+	# 	#generalise the below line
+	# 	task = Task.to_json(exe_pool[0])      ### won't work as of now ...till master is ready to accept updates.
+	# 	message=json.dumps(send_task)
+	# 	s.send(message.encode())
+	# 	print('done...')
 """updater code ends"""
 
 
 
 
 """executor code"""
-def task_exec():
-	while 1:
-		for task in exe_pool:
-			print('-'*60)
-			print(f"executing task with id {task.taskid}")
+def task_exec(task):
+	while not task.done and task.duration != 0:
+		time.sleep(1)
+		task.duration -= 1
 
-			lock.acquire()
-			task.duration-=1
-			task.print()
-			if task.duration==0:
-				print(f"Task {task.taskid} has finished execution")
-				#task_out(send_task)
-				task.done = True
-				updater_thread=threading.Thread(target=task_out,args=(task,))
-				updater_thread.start()
+	lock.acquire()
+	task_out(task)
+	lock.release()
 
-				updater_thread.join()
-				exe_pool.remove(task)
-			lock.release()
 
-			print("")
-			print('-'*60)
+	# while True:
+	# 	for task in exe_pool:
+	# 		# print('-'*60)
+	# 		print(f"Executing task with id {task.task_id}")
+	#
+	# 		lock.acquire()
+	# 		task.duration-=1
+	# 		task.print()
+	# 		if task.duration==0:
+	# 			print(f"Task {task.task_id} has finished execution")
+	# 			#task_out(send_task)
+	# 			task.done = True
+	# 			updater_thread=threading.Thread(target=task_out,args=(task,))
+	# 			updater_thread.start()
+	#
+	# 			updater_thread.join()
+	# 			exe_pool.remove(task)
+	# 		lock.release()
+	#
+	# 		print("")
+	# 		print('-'*60)
 
 """executor code ends"""
 
 
 
 ''' Running worker'''
-listening_thread=threading.Thread(target=task_in)
-executing_thread=threading.Thread(target=task_exec)
+listening_thread = threading.Thread(target = task_in)
+# executing_thread = threading.Thread(target=task_exec)
 #task_in()
 listening_thread.start()
 
-executing_thread.start()
+# executing_thread.start()
 #time.sleep(10)
