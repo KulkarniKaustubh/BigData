@@ -5,6 +5,9 @@ import time
 import random
 import threading
 
+'''
+arguments are parsed here
+'''
 try:
 	config_path = sys.argv[1]
 except IndexError:
@@ -23,7 +26,13 @@ with open(config_path) as f:
 	summary = json.load(f)
 f.close()
 
+'''
+done
+'''
 
+'''
+class definitions
+'''
 
 class worker:
 	def __init__(self, wid, slot, port):
@@ -62,14 +71,28 @@ class job:
 		print("reduce_tasks : ", len(self.reduce_tasks),"       red_task_done: ", self.reduce_tasks_done)
 		for i in self.reduce_tasks:
 			i.print()
+'''
+done
+'''
 
+'''
+global variables are declared here
+'''
 workers = [] #list of worker objects
 num_workers = 0
 
 jobs = []
 num_jobs = 0
-
-
+'''
+done
+'''
+'''
+all semaphores are declared here
+'''
+lock=threading.Semaphore(1)
+'''
+done
+'''
 print('Workers init started......')
 for line in summary['workers']:
 	workers.append(worker(line['worker_id'], line['slots'], line['port']))
@@ -86,6 +109,18 @@ def RANDOM_algo():
 		if(workers[i].occupied_slots < workers[i].slot):
 			return i
 
+def send_task_to_worker(task,job_id):
+	#call this under listen_to_worker since they are in the same thread
+	i = RANDOM_algo()
+	#port = workers[i].port #eventually do this
+	# need to decrement the slot of worker
+	port = 4001
+	with socket(AF_INET, SOCK_STREAM) as s:
+		s.connect(("localhost", port))
+		send_task = task.to_json(job_id, i)
+		message=json.dumps(send_task)
+		s.send(message.encode())
+		
 def listen_to_requests():
 	#opening this will make port 5000 active and recieve requests from requests.py
 	request = socket(AF_INET,SOCK_STREAM) #init a TCP socket
@@ -94,20 +129,31 @@ def listen_to_requests():
 	print("Master ready to recieve job requests from requests.py")
 	k = 0 #as of for now only 3, dont know how to take as many as needed
 
-	while(k!=3):
+	while(1):
 		connectionSocket, addr = request.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
 		print("Received job request from: ", addr)
 		mssg = json.loads(message)
-
+		
+		lock.acquire()
 		j = job(mssg['job_id']) #init a job
 		for maps_i in mssg['map_tasks']:
 			j.map_tasks.append(task(maps_i['task_id'], maps_i['duration'])) #append all map_tasks of a job, by initing task
 		for reds_i in mssg['reduce_tasks']:
 			j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
 		jobs.append(j) #add to list of jobs
-		k += 1
-
+		
+		if j.map_tasks_done==len(j.map_tasks):
+			for t in j.reduce_tasks:
+				sender_thread=threading.Thread(target=send_task_to_worker,args=(t,j.jobid,))
+				sender_thread.start()
+				sender_thread.join()
+		else:
+			for t in j.map_tasks:
+				sender_thread=threading.Thread(target=send_task_to_worker,args=(t,j.jobid,))
+				sender_thread.start()
+				sender_thread.join()
+		lock.release()
 	request.close()
 
 
@@ -124,6 +170,7 @@ def listen_updates():
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
 		mssg = json.loads(message)
 
+		lock.acquire()
 		# taking in the necessary values inorder to increase the slot count and to check if a job has finished executing.
 		print(mssg)
 		task_id = mssg['taskid']
@@ -141,7 +188,7 @@ def listen_updates():
 							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
 							break
 
-				jobs[0].print() #added this to check i real task.done is getting updated
+				#jobs[0].print() #added this to check i real task.done is getting updated
 				break
 
 		else:
@@ -170,7 +217,7 @@ def listen_updates():
 					print('Job ', job_id, ' was processed successfully', end = '\n')
 
 				break
-
+		lock.release()
 	update.close()
 
 	'''
@@ -187,32 +234,20 @@ def listen_updates():
 	'''
 
 
-def send_task_to_worker():
-	#call this under listen_to_worker since they are in the same thread
-	i = RANDOM_algo()
-	#port = workers[i].port #eventually do this
-	# need to decrement the slot of worker
-	port = 4001
-	with socket(AF_INET, SOCK_STREAM) as s:
-		s.connect(("localhost", port))
-		send_task = task.to_json(jobs[0].map_tasks[0], jobs[0].jobid, 1)
-		message=json.dumps(send_task)
-		s.send(message.encode())
 
 
+listening_requests = threading.Thread(target=listen_to_requests) 
+listening_worker = threading.Thread(target=listen_updates) 
+
+listening_requests.start()
+listening_worker.start()
 '''
-t1 = threading.Thread(target=listen_to_requests) 
-t2 = threading.Thread(target=send_task_to_worker) 
-
-t1.start()
-t2.start()
 t1.join()
 t2.join()
-'''
 listen_to_requests()
 send_task_to_worker()
 listen_updates()
-
+'''
 num_jobs = len(jobs)
 for i in range(num_jobs):
 	print('---------------------------------')
