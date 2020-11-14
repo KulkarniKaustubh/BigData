@@ -132,8 +132,9 @@ def task_exec(task):
 	while not task.done and task.duration != 0:
 		time.sleep(1)
 		task.duration -= 1
+		if task.duration == 0:
+			task.done=True
 
-	task.done=True
 	#lock.acquire()
 	task_out(task)
 	#lock.release()
