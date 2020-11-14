@@ -86,6 +86,7 @@ num_jobs = 0
 '''
 done
 '''
+
 '''
 all semaphores are declared here
 '''
@@ -93,6 +94,7 @@ lock=threading.Semaphore(1)
 '''
 done
 '''
+
 print('Workers init started......')
 for line in summary['workers']:
 	workers.append(worker(line['worker_id'], line['slots'], line['port']))
@@ -102,7 +104,9 @@ for  i in workers:
 num_workers = len(workers)
 print('Workers init ended......')
 
-
+'''
+function definitions
+'''
 def RANDOM_algo():
 	while(1):
 		i = random.randrange(0, len(workers))
@@ -219,7 +223,9 @@ def listen_updates():
 				break
 		lock.release()
 	update.close()
-
+'''
+done
+'''
 	'''
 	#hardcode
 	i = '{"job_id": "0", "map_tasks": [{"task_id": "0_M0", "duration": 2}, {"task_id": "0_M1", "duration": 4}, {"task_id": "0_M2", "duration": 3}, {"task_id": "0_M3", "duration": 4}], "reduce_tasks": [{"task_id": "0_R0", "duration": 1}]}'
@@ -234,7 +240,9 @@ def listen_updates():
 	'''
 
 
-
+'''
+running master
+'''
 
 listening_requests = threading.Thread(target=listen_to_requests) 
 listening_worker = threading.Thread(target=listen_updates) 
