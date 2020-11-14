@@ -144,9 +144,9 @@ def scheduling_algo():
 def send_task_to_worker(task,job_id):
 	#call this under listen_to_worker since they are in the same thread
 	i = scheduling_algo()
-	# port = workers[i].port #eventually do this
+	port = workers[i].port #eventually do this
 	# need to decrement the slot of worker
-	port = 4000
+	#port = 4000
 	with socket(AF_INET, SOCK_STREAM) as s:
 		s.connect(("localhost", port))
 		send_task = task.to_json(job_id, i)
@@ -222,7 +222,7 @@ def listen_updates():
 							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
 							break
 
-				#jobs[0].print() #added this to check i real task.done is getting updated
+				#jobs[int(job_id)].print() #added this to check i real task.done is getting updated
 				break
 
 		else:

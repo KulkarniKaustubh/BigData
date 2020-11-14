@@ -107,9 +107,9 @@ def task_out(task): # take a task as input to send it through .send
 		print(f"Sending {task.task_id} completed to master")
 		#generalise the below line
 
-		task.to_json()
+		send_task=Task.to_json(task)
 
-		message = json.dumps(task)
+		message = json.dumps(send_task)
 		s.send(message.encode())
 
 		print(f"Sent task {task.task_id} completed...")
@@ -133,9 +133,10 @@ def task_exec(task):
 		time.sleep(1)
 		task.duration -= 1
 
-	lock.acquire()
+	task.done=True
+	#lock.acquire()
 	task_out(task)
-	lock.release()
+	#lock.release()
 
 
 	# while True:
