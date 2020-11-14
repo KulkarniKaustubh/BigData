@@ -50,7 +50,9 @@ class task:
 		self.duration = duration
 		self.done = False
 	def print(self):
-		print("task_id: ", self.task_id, "  duration: ", self.duration, "   status: ", self.done)
+		#print("task_id:  1_M2   duration:  4    status:  True")
+		print("task_id: {0} | duration: {1} | status: {2} ".format(self.task_id, self.duration, self.done))
+		#print("task_id: ", self.task_id, "  duration: ", self.duration, "   status: ", self.done)
 	def to_json(self, job_id, worker_id):
 		temp = {"job_id": job_id, "worker_id": worker_id, "task_id": self.task_id, "duration":self.duration, "done":self.done}
 		return temp
@@ -66,11 +68,15 @@ class job:
 	def print(self):
 		print("Job          : ", self.job_id, "    status: ", self.job_done)
 		print("map_tasks    : ", len(self.map_tasks),"       map_task_done: ", self.map_tasks_done)
+		print("-------------------------------------------")
 		for i in self.map_tasks:
 			i.print()
+		print("-------------------------------------------")
 		print("reduce_tasks : ", len(self.reduce_tasks),"       red_task_done: ", self.reduce_tasks_done)
+		print("-------------------------------------------")
 		for i in self.reduce_tasks:
 			i.print()
+		print("-------------------------------------------")
 '''
 done
 '''
@@ -175,18 +181,15 @@ def listen_to_requests():
 			j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
 		jobs.append(j) #add to list of jobs
 
-		if j.map_tasks_done == len(j.map_tasks):
-			for t in j.reduce_tasks:
-				# send_task_to_worker(t, j.job_id)
-				sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.job_id,))
-				sender_thread.start()
-				sender_thread.join()
-		else:
-			for t in j.map_tasks:
-				# send_task_to_worker(t, j.job_id)
-				sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.job_id,))
-				sender_thread.start()
-				sender_thread.join()
+		for t in j.map_tasks:
+			# send_task_to_worker(t, j.job_id)
+			sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.job_id,))
+			sender_thread.start()
+			sender_thread.join()
+		
+		
+			
+			
 		lock.release()
 	request.close()
 
@@ -206,6 +209,7 @@ def listen_updates():
 
 		lock.acquire()
 		# taking in the necessary values inorder to increase the slot count and to check if a job has finished executing.
+		print("\n\n")
 		print(mssg)
 		task_id = mssg['task_id']
 		worker_id = mssg['worker_id']
@@ -215,15 +219,20 @@ def listen_updates():
 		if '_M' in task_id: # The task that got completed is a map task
 
 			for job in jobs:
-				if(job.job_id == job_id): # Finding the parent job of the map task
+				if(job.job_id == job_id): # Finding the parent job of the map task					
 					for m_task in job.map_tasks:
 						if m_task.task_id == task_id:
 							m_task.done = True # Updating the map task's done to True
 							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
 							break
-
-				#jobs[int(job_id)].print() #added this to check i real task.done is getting updated
-				break
+					#this is to send reduce tasks if all map tasks wer completed
+					if((job.map_tasks_done == len(job.map_tasks)) and (job.job_done == False)):			
+						# send_task_to_worker(t, j.job_id)
+						for t in job.reduce_tasks:
+							sender_thread1 = threading.Thread(target=send_task_to_worker,args=(t,job.job_id,))
+							sender_thread1.start()
+							sender_thread1.join()
+			jobs[int(job_id)].print() #added this to check i real task.done is getting updated
 
 		else:
 
@@ -234,13 +243,14 @@ def listen_updates():
 							r_task.done = True # Updating the reduce task's done to True
 							job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
 							break
-				break
+			jobs[int(job_id)].print()	
 
 
 		for worker in workers:
 			if worker.id == worker_id:
 				worker.occupied_slots -= 1 # Since the task got completed, the slot that was occupied with this task will be free now.
 
+		
 
 		# To check if the entire job is done
 		for job in jobs:
@@ -256,19 +266,6 @@ def listen_updates():
 '''
 done
 '''
-'''
-	#hardcode
-	i = '{"job_id": "0", "map_tasks": [{"task_id": "0_M0", "duration": 2}, {"task_id": "0_M1", "duration": 4}, {"task_id": "0_M2", "duration": 3}, {"task_id": "0_M3", "duration": 4}], "reduce_tasks": [{"task_id": "0_R0", "duration": 1}]}'
-	mssg = json.loads(i)
-	j = job(mssg['job_id']) #init a job
-	for maps_i in mssg['map_tasks']:
-		j.map_tasks.append(task(maps_i['task_id'], maps_i['duration'])) #append all map_tasks of a job, by initing task
-	for reds_i in mssg['reduce_tasks']:
-		j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
-	jobs.append(j)
-	#hardcode
-'''
-
 
 '''
 running master
@@ -290,48 +287,5 @@ num_jobs = len(jobs)
 for i in range(num_jobs):
 	print('---------------------------------')
 	jobs[i].print()
-
-
-'''
-if schedule_algo == 'RANDOM':
-	while True:
-		# listen_updates()
-
-		i = random.randrange(0, len(workers))
-
-		if workers[i].occupied_slots < workers[i].slot:
-			# code to send task
-			# code to update occupied_slots of worker
-			break
-
-if schedule_algo == 'RR':
-	workers = sorted(workers, key=lambda worker: worker.id)
-	num_workers = len(workers)
-	i = 0
-
-	while True:
-		# listen_updates()
-
-		if workers[i].occupied_slots < workers[i].slot:
-			# code to send task
-			# code to update occupied_slots of worker
-			break
-
-		i = (i + 1)%(num_workers - 1)
-
-if schedule_algo == 'LL':
-	while True:
-		# listen_updates()
-
-		least_loaded = sorted(workers, lambda worker: worker.slot - worker.occupied_slots)
-
-		if least_loaded[0].occupied_slots < least_loaded[0].slot:
-			# code to send task
-			# code to update occupied_slots of worker
-			break
-
-		time.sleep(1)
-
-'''
 
 time.sleep(10)
