@@ -1,7 +1,7 @@
 import json
 import sys
 from socket import *
-import time 
+import time
 import random
 import threading
 
@@ -107,24 +107,52 @@ print('Workers init ended......')
 '''
 function definitions
 '''
-def RANDOM_algo():
-	while(1):
-		i = random.randrange(0, len(workers))
-		if(workers[i].occupied_slots < workers[i].slot):
-			return i
+def scheduling_algo():
+	if schedule_algo == 'RANDOM':
+		while True:
+			# listen_updates()
+
+			i = random.randrange(0, len(workers))
+
+			if workers[i].occupied_slots < workers[i].slot:
+				return i
+
+	if schedule_algo == 'RR':
+		workers_sorted = sorted(workers, key=lambda worker: worker.id)
+		num_workers = len(workers)
+		i = 0
+
+		while True:
+			if workers_sorted[i].occupied_slots < workers_sorted[i].slot:
+				for idx in range(len(workers)):
+					if workers_sorted[i] == workers[idx]:
+						return idx
+
+			i = (i + 1)%(num_workers - 1)
+
+	if schedule_algo == 'LL':
+		while True:
+			least_loaded = sorted(workers, lambda worker: worker.slot - worker.occupied_slots)
+
+			if least_loaded[0].occupied_slots < least_loaded[0].slot:
+				for idx in range(len(workers)):
+					if least_loaded[0] == workers[idx]:
+						return idx
+
+			time.sleep(1)
 
 def send_task_to_worker(task,job_id):
 	#call this under listen_to_worker since they are in the same thread
-	i = RANDOM_algo()
-	#port = workers[i].port #eventually do this
+	i = scheduling_algo()
+	port = workers[i].port #eventually do this
 	# need to decrement the slot of worker
-	port = 4001
+	# port = 4001
 	with socket(AF_INET, SOCK_STREAM) as s:
 		s.connect(("localhost", port))
 		send_task = task.to_json(job_id, i)
 		message=json.dumps(send_task)
 		s.send(message.encode())
-		
+
 def listen_to_requests():
 	#opening this will make port 5000 active and recieve requests from requests.py
 	request = socket(AF_INET,SOCK_STREAM) #init a TCP socket
@@ -133,12 +161,12 @@ def listen_to_requests():
 	print("Master ready to recieve job requests from requests.py")
 	k = 0 #as of for now only 3, dont know how to take as many as needed
 
-	while(1):
+	while True:
 		connectionSocket, addr = request.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
 		print("Received job request from: ", addr)
 		mssg = json.loads(message)
-		
+
 		lock.acquire()
 		j = job(mssg['job_id']) #init a job
 		for maps_i in mssg['map_tasks']:
@@ -146,15 +174,17 @@ def listen_to_requests():
 		for reds_i in mssg['reduce_tasks']:
 			j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
 		jobs.append(j) #add to list of jobs
-		
-		if j.map_tasks_done==len(j.map_tasks):
+
+		if j.map_tasks_done == len(j.map_tasks):
 			for t in j.reduce_tasks:
-				sender_thread=threading.Thread(target=send_task_to_worker,args=(t,j.jobid,))
+				# send_task_to_worker(t, j.jobid)
+				sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.jobid,))
 				sender_thread.start()
 				sender_thread.join()
 		else:
 			for t in j.map_tasks:
-				sender_thread=threading.Thread(target=send_task_to_worker,args=(t,j.jobid,))
+				# send_task_to_worker(t, j.jobid)
+				sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.jobid,))
 				sender_thread.start()
 				sender_thread.join()
 		lock.release()
@@ -226,7 +256,7 @@ def listen_updates():
 '''
 done
 '''
-	'''
+'''
 	#hardcode
 	i = '{"job_id": "0", "map_tasks": [{"task_id": "0_M0", "duration": 2}, {"task_id": "0_M1", "duration": 4}, {"task_id": "0_M2", "duration": 3}, {"task_id": "0_M3", "duration": 4}], "reduce_tasks": [{"task_id": "0_R0", "duration": 1}]}'
 	mssg = json.loads(i)
@@ -237,15 +267,15 @@ done
 		j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
 	jobs.append(j)
 	#hardcode
-	'''
+'''
 
 
 '''
 running master
 '''
 
-listening_requests = threading.Thread(target=listen_to_requests) 
-listening_worker = threading.Thread(target=listen_updates) 
+listening_requests = threading.Thread(target = listen_to_requests)
+listening_worker = threading.Thread(target = listen_updates)
 
 listening_requests.start()
 listening_worker.start()

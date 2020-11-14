@@ -1,6 +1,6 @@
 import json
 import sys
-from socket import * 
+from socket import *
 import time
 import threading
 
@@ -62,7 +62,7 @@ Semaphore definitions end
 """
 
 
-print("Worker ready to recieve tasks from master.py")
+print(f"Worker {work_id} ready to recieve tasks from master.py")
 
 
 """
@@ -70,17 +70,17 @@ listener code
 """
 def task_in():
 	while(1):
-		connectionSocket, addr = task_in_socket.accept() 
+		connectionSocket, addr = task_in_socket.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
 		print("Received job request from: ", addr)
 		mssg = json.loads(message)
 		#this will apend the task to exe pool
 		sample_test = task(mssg['taskid'], mssg['duration'], mssg['jobid'], mssg['workerid'])
-		
+
 		lock.acquire()
 		exe_pool.append(sample_test)
 		lock.release()
-		
+
 		#sample_test.print()
 		#this is a dummy line to mimic completion of the task
 		"""sample_test.done = True
@@ -117,7 +117,7 @@ def task_exec():
 		for task in exe_pool:
 			print('-'*60)
 			print(f"executing task with id {task.taskid}")
-			
+
 			lock.acquire()
 			task.duration-=1
 			task.print()
@@ -127,14 +127,14 @@ def task_exec():
 				task.done = True
 				updater_thread=threading.Thread(target=task_out,args=(task,))
 				updater_thread.start()
-				
+
 				updater_thread.join()
 				exe_pool.remove(task)
 			lock.release()
-			
+
 			print("")
 			print('-'*60)
-			
+
 """executor code ends"""
 
 
@@ -147,6 +147,3 @@ listening_thread.start()
 
 executing_thread.start()
 #time.sleep(10)
-
-
-
