@@ -222,8 +222,10 @@ def listen_updates():
 				if(job.job_id == job_id): # Finding the parent job of the map task					
 					for m_task in job.map_tasks:
 						if m_task.task_id == task_id:
-							m_task.done = True # Updating the map task's done to True
-							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
+							if m_task.done != True: # Checking if the map task's done is True
+								print("\nMap task with taskid ", task_id, " has failed.",end = '\n') 
+							else:
+								job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
 							break
 					#this is to send reduce tasks if all map tasks wer completed
 					if((job.map_tasks_done == len(job.map_tasks)) and (job.job_done == False)):			
@@ -240,9 +242,14 @@ def listen_updates():
 				if(job.job_id == job_id): # Finding the parent job of the reduce task
 					for r_task in job.reduce_tasks:
 						if r_task.task_id == task_id:
-							r_task.done = True # Updating the reduce task's done to True
-							job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
-							break
+							if r_task.done != True: #  Checking if the reduce task's done is True
+								print("\nReduce task with taskid ", task_id, " has failed.",end = '\n')
+							else:
+								job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
+								if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)): # To check if the entire job is done
+									job.job_done = True # Updating the job's done to True
+									print('Job ', job_id, ' was processed successfully', end = '\n')
+								break
 			jobs[int(job_id)].print()	
 
 
@@ -253,14 +260,15 @@ def listen_updates():
 		
 
 		# To check if the entire job is done
-		for job in jobs:
+		# for job in jobs:
 
-			if(job.job_id == job_id): #searching for job_id
-				if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)):
-					job.job_done = True # Updating the job's done to True
-					print('Job ', job_id, ' was processed successfully', end = '\n')
+		# 	if(job.job_id == job_id): #searching for job_id
+		# 		if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)):
+		# 			job.job_done = True # Updating the job's done to True
+		# 			print('Job ', job_id, ' was processed successfully', end = '\n')
 
-				break
+		# 		break
+
 		lock.release()
 	update.close()
 '''
