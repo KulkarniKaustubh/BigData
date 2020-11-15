@@ -31,6 +31,26 @@ f.close()
 '''
 done
 '''
+with open("log.json", mode='w', encoding='utf-8') as f:
+	data = {}
+	data['jobs'] = []
+	data['tasks'] = []
+	json.dump(data, f, indent = 2)
+f.close()	
+
+def logger(mssg,what):
+	#with open("log.json") as r:
+	#	old = json.load(r)
+	#old.update(mssg)
+	data = []
+	with open("log.json", "r+", encoding='utf-8') as file:
+		data = json.load(file)
+		data[what].append(mssg)
+		file.seek(0)
+		json.dump(data, file, indent = 2)
+		#print(data)
+	file.close()
+	
 
 '''
 class definitions
@@ -83,6 +103,9 @@ class job:
 		for i in self.reduce_tasks:
 			i.print()
 		print("-------------------------------------------")
+	def to_json(self):
+		temp = {"job_id": self.job_id,"map_tasks_done":self.map_tasks_done, "reduce_tasks_done":self.reduce_tasks_done, "arrival_time":self.arrival_time,"end_time":self.end_time,  "job_done":self.job_done}
+		return temp
 '''
 done
 '''
@@ -245,6 +268,7 @@ def listen_updates():
 							m_task.arrival_time = arrival_time
 							m_task.end_time = end_time
 							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
+							logger(mssg, 'tasks')
 							break
 
 					#this is to send reduce tasks if all map tasks wer completed
@@ -266,10 +290,13 @@ def listen_updates():
 							r_task.arrival_time = arrival_time
 							r_task.end_time = end_time
 							job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
+							logger(mssg, 'tasks')
 							if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)): # To check if the entire job is done
 								job.job_done = True # Updating the job's done to True
 								#job.end_time = datetime.fromtimestamp(r_task.end_time)
 								job.end_time = r_task.end_time
+								temp = job.to_json()
+								logger(temp,'jobs')
 								print('Job ', job_id, ' was processed successfully', end = '\n')
 								print("Arrival: {0}    End: {1}".format(job.arrival_time, job.end_time))
 							break
