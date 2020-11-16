@@ -5,6 +5,8 @@ import time
 import random
 import threading
 from datetime import datetime
+import os
+import csv
 
 # dt_object = datetime.fromtimestamp(arrival_time)
 '''
@@ -28,32 +30,32 @@ with open(config_path) as f:
 	summary = json.load(f)
 f.close()
 
+if(os.path.isfile("job_log.csv") and os.path.isfile("task_log.csv")):
+	os.remove("job_log.csv")
+	os.remove("task_log.csv")
 '''
 done
 '''
-with open("log.json", mode='w', encoding='utf-8') as f:
-	algo = {}
-	algo[schedule_algo] = []
-	data = {}
-	data['jobs'] = []
-	data['tasks'] = []
-	algo[schedule_algo].append(data)
-	json.dump(algo, f, indent = 2)
-f.close()	
-
 def logger(mssg,what):
 	#with open("log.json") as r:
 	#	old = json.load(r)
 	#old.update(mssg)
-	data = []
-	with open("log.json", "r+", encoding='utf-8') as file:
-		data = json.load(file)
-		data[schedule_algo][0][what].append(mssg)
-		print(data)
-		#data[what].append(mssg)
-		file.seek(0)
-		json.dump(data, file, indent = 2)
-		#print(data)
+	if(what == 'jobs'):
+		filename = "job_log.csv"
+		column_name = ["algo", "job_id", "map_tasks_done", "reduce_tasks_done", "arrival_time", "end_time", "job_done"]
+	else:
+		filename = "task_log.csv"
+		column_name = ["algo", "job_id", "worker_id", "task_id", "arrival_time", "end_time", "duration", "done"]
+
+	file_exists = os.path.isfile(filename)
+	mssg["algo"] = schedule_algo
+	with open(filename, 'a') as file:
+		writer = csv.DictWriter(file, delimiter=',', lineterminator='\n',fieldnames=column_name)
+		
+		if (not file_exists):
+			writer.writeheader()
+		
+		writer.writerow(mssg)
 	file.close()
 	
 
