@@ -32,10 +32,13 @@ f.close()
 done
 '''
 with open("log.json", mode='w', encoding='utf-8') as f:
+	algo = {}
+	algo[schedule_algo] = []
 	data = {}
 	data['jobs'] = []
 	data['tasks'] = []
-	json.dump(data, f, indent = 2)
+	algo[schedule_algo].append(data)
+	json.dump(algo, f, indent = 2)
 f.close()	
 
 def logger(mssg,what):
@@ -45,7 +48,9 @@ def logger(mssg,what):
 	data = []
 	with open("log.json", "r+", encoding='utf-8') as file:
 		data = json.load(file)
-		data[what].append(mssg)
+		data[schedule_algo][0][what].append(mssg)
+		print(data)
+		#data[what].append(mssg)
 		file.seek(0)
 		json.dump(data, file, indent = 2)
 		#print(data)
