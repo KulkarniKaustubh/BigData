@@ -174,7 +174,7 @@ def scheduling_algo():
 
 	if schedule_algo == 'LL':
 		while True:
-			least_loaded = sorted(workers, lambda worker: worker.slot - worker.occupied_slots)
+			least_loaded = sorted(workers, key = lambda worker: worker.slot - worker.occupied_slots)
 
 			if least_loaded[0].occupied_slots < least_loaded[0].slot:
 				for idx in range(len(workers)):
