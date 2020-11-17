@@ -4,6 +4,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructField
 from pyspark.sql.types import StructType
 from pyspark.sql.types import StringType
+from pyspark.sql.types import IntegerType
+import pandas
 
 def f(x):
     d = {}
@@ -14,10 +16,10 @@ def f(x):
 word=''
 if sys.argv[1]:
 	word=sys.argv[1]
-	
+
 if(sys.argv[2]):
 	k = int(sys.argv[2])
-	
+
 data1=''
 if sys.argv[3]:
 	data1=sys.argv[3]
@@ -52,75 +54,25 @@ schema = StructType(fields)
 frdd2=mappedRdd2.filter(lambda row:row != header)
 df2=spark.createDataFrame(frdd2,schema=schema)
 
+df1=df1[df1.word==word]
+df2=df2[df2.word==word]
 
 df1=df1.repartitionByRange(100,'key_id')
 df2=df2.repartitionByRange(100,'key_id')
 
-print(df1.show())
-print('-'*70)
-print(df2.show())
-"""
-columns1={}
-ind=0
-for i in mappedRdd1.first(): # stores indices of each column
-	columns1[i]=ind
-	ind+=1
+# print(df1.show())
+# print('-'*70)
+# print(df2.show())
 
-columns2={}
-ind=0
-for i in mappedRdd2.first(): # stores indices of each column
-	columns2[i]=ind
-	ind+=1
-'''
-columns1
-{'word': 0, 'timestamp': 1, 'recognized': 2, 'key_id': 3, 'Total_Strokes': 4}
+temp_df1=df1.alias('temp_df1')
+temp_df2=df2.alias('temp_df2')
 
-columns2
-{'word': 0, 'countrycode': 1, 'key_id': 2}
-'''
-
-
-pairRdd1 = mappedRdd1.map(lambda x: (x[columns1['key_id']], x)) #this is to join based on key = 'key_id'
-pairRdd2 = mappedRdd2.map(lambda x: (x[columns2['key_id']], x))
-
-joinrdd = pairRdd1.join(pairRdd2)
-fil_joinrdd = joinrdd.map(lambda x: (x[1][0], x[1][1][columns2['countrycode']]))
-
-'''
-joinrdd
-[('4665167562407936', (['alarm clock', '2017-03-28 20:20:50.81058 UTC','True', '4665167562407936','7'], ['alarm clock', 'GB','4665167562407936']))]
-
-fil_joinrdd
-[(['alarm clock', '2017-03-28 20:20:50.81058 UTC', 'True', '4665167562407936', '7'], 'GB')]
-'''
-
-
-wordRdd = fil_joinrdd.filter(lambda x: x[0][columns1['word']] == word)
-un_recRdd = wordRdd.filter(lambda x: x[0][columns1['recognized']] == 'False')
-
-'''
-un_recRdd (only contains recognized = false and word = word )
-[(['ambulance', '2017-03-03 11:47:22.79851 UTC', 'True', '5689948554395648', '7'], 'GB')]
-'''
-
-
-un_recRdd_k = un_recRdd.filter(lambda x: int(x[0][columns1['Total_Strokes']]) < k)
-'''
-un_recRdd_k (only < k strokes)
-[(['ambulance', '2017-03-22 07:01:25.66032 UTC', 'True', '4930758240108544', '4'], 'KR')]
-'''
-
-ctry = un_recRdd_k.map(lambda x: (x[1], 1))
-'''
-[(CA, 1), (US, 1), (CA, 1)]
-'''
-
-count_ctry = ctry.reduceByKey(lambda x,y : (x+y) ).sortByKey()
-'''
-[(CA, 2), (US, 1)]
-'''
-
-#print(count_ctry.collect())
-for item in count_ctry.collect():
-	print(f"{item[0]},{item[1]}")
-"""
+fdf=temp_df1.join(temp_df2, temp_df1.key_id==temp_df2.key_id)
+fdf=fdf[fdf.recognized=='False']
+fdf = fdf.withColumn("Total_Strokes", fdf["Total_Strokes"].cast(IntegerType()))
+fdf=fdf[fdf.Total_Strokes<k]
+cc=fdf.groupBy("countrycode").count().sort("countrycode")
+pcc=cc.toPandas()
+for i in range(len(pcc)) :
+    print(pcc.loc[i, "countrycode"], pcc.loc[i, "count"])
+# print(cc.show())
