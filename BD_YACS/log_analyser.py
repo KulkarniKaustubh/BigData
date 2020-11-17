@@ -50,7 +50,7 @@ if not df.empty:
     filename += "_logs_analysis.txt"
 
     # Appending the analysis obtained to the file
-    FILE = open(filename, "W")
+    FILE = open(filename, "w")
     s = "*" * 25
     FILE.write("{} JOB {}\n\n".format(s, s))
     FILE.write("Mean Job Completion time : {} seconds\n".format(mean_time))
