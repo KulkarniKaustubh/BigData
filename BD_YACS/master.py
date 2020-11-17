@@ -4,7 +4,11 @@ from socket import *
 import time
 import random
 import threading
+from datetime import datetime
+import os
+import csv
 
+# dt_object = datetime.fromtimestamp(arrival_time)
 '''
 arguments are parsed here
 '''
@@ -26,9 +30,34 @@ with open(config_path) as f:
 	summary = json.load(f)
 f.close()
 
+if(os.path.isfile("job_log.csv") and os.path.isfile("task_log.csv")):
+	os.remove("job_log.csv")
+	os.remove("task_log.csv")
 '''
 done
 '''
+def logger(mssg,what):
+	#with open("log.json") as r:
+	#	old = json.load(r)
+	#old.update(mssg)
+	if(what == 'jobs'):
+		filename = "job_log.csv"
+		column_name = ["algo", "job_id", "map_tasks_done", "reduce_tasks_done", "arrival_time", "end_time", "job_done"]
+	else:
+		filename = "task_log.csv"
+		column_name = ["algo", "job_id", "worker_id", "task_id", "arrival_time", "end_time", "duration", "done"]
+
+	file_exists = os.path.isfile(filename)
+	mssg["algo"] = schedule_algo
+	with open(filename, 'a') as file:
+		writer = csv.DictWriter(file, delimiter=',', lineterminator='\n',fieldnames=column_name)
+		
+		if (not file_exists):
+			writer.writeheader()
+		
+		writer.writerow(mssg)
+	file.close()
+	
 
 '''
 class definitions
@@ -49,6 +78,8 @@ class task:
 		self.task_id = task_id
 		self.duration = duration
 		self.done = False
+		self.arrival_time = -1
+		self.end_time = -1
 	def print(self):
 		#print("task_id:  1_M2   duration:  4    status:  True")
 		print("task_id: {0} | duration: {1} | status: {2} ".format(self.task_id, self.duration, self.done))
@@ -65,8 +96,10 @@ class job:
 		self.map_tasks_done = 0 #count number of map_task.done == True
 		self.reduce_tasks_done = 0 #count number of red_task.done == True
 		self.job_done = False #true only when (map_tasks_done = True and reduce_tasks_done = True)
+		self.arrival_time = datetime.now().timestamp()
+		self.end_time = -1
 	def print(self):
-		print("Job          : ", self.job_id, "    status: ", self.job_done)
+		print("Job          : ", self.job_id, "\t status: ", self.job_done)
 		print("map_tasks    : ", len(self.map_tasks),"       map_task_done: ", self.map_tasks_done)
 		print("-------------------------------------------")
 		for i in self.map_tasks:
@@ -77,6 +110,9 @@ class job:
 		for i in self.reduce_tasks:
 			i.print()
 		print("-------------------------------------------")
+	def to_json(self):
+		temp = {"job_id": self.job_id,"map_tasks_done":self.map_tasks_done, "reduce_tasks_done":self.reduce_tasks_done, "arrival_time":self.arrival_time,"end_time":self.end_time,  "job_done":self.job_done}
+		return temp
 '''
 done
 '''
@@ -214,6 +250,8 @@ def listen_updates():
 		task_id = mssg['task_id']
 		worker_id = mssg['worker_id']
 		done_flag = mssg['done']
+		arrival_time = mssg['arrival_time']
+		end_time = mssg['end_time']
 
 		if done_flag == False:
 			if '_M' in task_id:
@@ -234,7 +272,10 @@ def listen_updates():
 					for m_task in job.map_tasks:
 						if m_task.task_id == task_id:
 							m_task.done = True # Updating the map task's done is True
+							m_task.arrival_time = arrival_time
+							m_task.end_time = end_time
 							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
+							logger(mssg, 'tasks')
 							break
 
 					#this is to send reduce tasks if all map tasks wer completed
@@ -253,10 +294,18 @@ def listen_updates():
 					for r_task in job.reduce_tasks:
 						if r_task.task_id == task_id:
 							r_task.done = True #  Checking if the reduce task's done is True
+							r_task.arrival_time = arrival_time
+							r_task.end_time = end_time
 							job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
+							logger(mssg, 'tasks')
 							if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)): # To check if the entire job is done
 								job.job_done = True # Updating the job's done to True
+								#job.end_time = datetime.fromtimestamp(r_task.end_time)
+								job.end_time = r_task.end_time
+								temp = job.to_json()
+								logger(temp,'jobs')
 								print('Job ', job_id, ' was processed successfully', end = '\n')
+								print("Arrival: {0}    End: {1}".format(job.arrival_time, job.end_time))
 							break
 					
 			jobs[int(job_id)].print()	

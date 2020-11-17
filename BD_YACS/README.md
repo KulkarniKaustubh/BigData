@@ -29,5 +29,5 @@ sh run.sh
 - [ ] Random schedule algo
 - [ ] Least Loaded schedule algo
 - [x] Port 5000
-- [ ] Port 5001, currently code implemented on master
+- [x] Port 5001
 - [ ] Usage of threads?? IMPORTANT 

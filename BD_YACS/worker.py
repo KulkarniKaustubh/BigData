@@ -3,7 +3,7 @@ import sys
 from socket import *
 import time
 import threading
-
+from datetime import datetime
 
 
 """ parsing arguments"""
@@ -28,15 +28,18 @@ except IndexError:
 
 class Task:
 	def __init__(self, task_id, duration, job_id, worker_id):
+		self.worker_id = worker_id
+		self.job_id = job_id
 		self.task_id = task_id
 		self.duration = duration
 		self.done = False
-		self.job_id = job_id
-		self.worker_id = worker_id
+		self.arrival_time = datetime.now().timestamp()
+		self.end_time = -1
 	def print(self):
-		print("job_id: ",self.job_id, "worker_id: ", self.worker_id, "task_id: ", self.task_id, "  duration: ", self.duration, "  done: ", self.done)
+		#print("job_id: ",self.job_id, "worker_id: ", self.worker_id, "task_id: ", self.task_id, "  duration: ", self.duration, "  done: ", self.done)
+		print("job_id: ",self.job_id, "worker_id: ", self.worker_id, "task_id: ", self.task_id, "arrival: ", self.arrival_time, "end: ",self.end_time ," duration: ", self.duration, "  done: ", self.done)
 	def to_json(self):
-		temp = {"job_id": self.job_id, "worker_id": self.worker_id, "task_id": self.task_id, "duration":self.duration, "done":self.done}
+		temp = {"job_id": self.job_id, "worker_id": self.worker_id, "task_id": self.task_id, "arrival_time": self.arrival_time, "end_time": self.end_time ,"duration": self.duration, "done": self.done}
 		return temp
 """ class definitions are over """
 
@@ -133,7 +136,9 @@ def task_exec(task):
 		time.sleep(1)
 		task.duration -= 1
 		if task.duration == 0:
+			task.end_time = datetime.now().timestamp()
 			task.done=True
+			task.print()
 
 	#lock.acquire()
 	task_out(task)
