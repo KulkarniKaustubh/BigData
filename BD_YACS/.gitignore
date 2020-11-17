@@ -1,3 +1,6 @@
 log.json
 job_log.csv
 task_log.csv
+LL_logs_analysis.txt
+RR_logs_analysis.txt
+RANDOM_logs_analysis.txt

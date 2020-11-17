@@ -24,10 +24,10 @@ sh run.sh
 ```  
 
 #### Whats left!?
-- [ ] job_id being searched through list O(n). Implement a dictionary to get it in O(1) - later
-- [ ] Round Robin schedule algo
-- [ ] Random schedule algo
-- [ ] Least Loaded schedule algo
+- [ ] ~~job_id being searched through list O(n). Implement a dictionary to get it in O(1) - later~~
+- [x] Schedule algos
 - [x] Port 5000
 - [x] Port 5001
-- [ ] Usage of threads?? IMPORTANT 
+- [ ] Usage of threads
+- [ ] Updation of slots, after and before worker allocation
+- [ ] Plot graphs for logging purposes
