@@ -60,6 +60,10 @@ df2=df2[df2.word==word]
 df1=df1.repartitionByRange(100,'key_id')
 df2=df2.repartitionByRange(100,'key_id')
 
+df1=df1[df1.recognized=='False']
+df1 = df1.withColumn("Total_Strokes", df1["Total_Strokes"].cast(IntegerType()))
+df1=df1[df1.Total_Strokes<k]
+
 # print(df1.show())
 # print('-'*70)
 # print(df2.show())
@@ -68,9 +72,9 @@ temp_df1=df1.alias('temp_df1')
 temp_df2=df2.alias('temp_df2')
 
 fdf=temp_df1.join(temp_df2, temp_df1.key_id==temp_df2.key_id)
-fdf=fdf[fdf.recognized=='False']
-fdf = fdf.withColumn("Total_Strokes", fdf["Total_Strokes"].cast(IntegerType()))
-fdf=fdf[fdf.Total_Strokes<k]
+# fdf=fdf[fdf.recognized=='False']
+# fdf = fdf.withColumn("Total_Strokes", fdf["Total_Strokes"].cast(IntegerType()))
+# fdf=fdf[fdf.Total_Strokes<k]
 cc=fdf.groupBy("countrycode").count().sort("countrycode")
 pcc=cc.toPandas()
 for i in range(len(pcc)) :
