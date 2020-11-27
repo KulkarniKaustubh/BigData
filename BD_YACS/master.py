@@ -30,8 +30,6 @@ with open(config_path) as f:
 	summary = json.load(f)
 f.close()
 
-if(not os.path.isfile("logs/")):
-	os.mkdir("logs")
 if(os.path.isfile("logs/job_log.csv") and os.path.isfile("logs/task_log.csv")):
 	os.remove("logs/job_log.csv")
 	os.remove("logs/task_log.csv")
