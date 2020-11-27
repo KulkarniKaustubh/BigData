@@ -4,3 +4,6 @@ task_log.csv
 LL_logs_analysis.txt
 RR_logs_analysis.txt
 RANDOM_logs_analysis.txt
+*.png
+img/*
+logs/*

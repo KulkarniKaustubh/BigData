@@ -22,6 +22,7 @@ def plotter(log_dict):
 
     imgname = log_dict['algo'][0] # Getting the name of the algorithm
     imgname += "_plot.png" # obtaining the appropriate name to save the plot later
+    imgname = "img/" + imgname
 
     info = [] # list of tuples (('arrival_time', 'worker_id')) in order to sort in ascending order of 'arrival time'
     graph_dict = {'time' : [], 0 : [], 1 : [], 2 : []} # dictionary to store the number of tasks assigned to each worker every time a task arrives for scheduling 
@@ -70,19 +71,20 @@ def plotter(log_dict):
     
 
 
-# Analysing job_logs.csv
-df = pd.read_csv("job_log.csv")
+# Analysing logs/job_logs.csv
+df = pd.read_csv("logs/job_log.csv")
 if not df.empty: 
     # Converting the dataframe 'df' into a dictonary 'job_log_dict'
     job_log_dict = df.to_dict()
     # Create the scheduling algorith specific file to store the analysis obtained
     filename = job_log_dict['algo'][0]
     filename += "_logs_analysis.txt"
+    filename = "logs/" + filename
     FILE = open(filename, "w")
     mean_median_dump(job_log_dict, 1, FILE)
 
-# Analysing task_logs.csv
-df = pd.read_csv("task_log.csv")
+# Analysing logs/task_logs.csv
+df = pd.read_csv("logs/task_log.csv")
 if not df.empty:
     # Converting the dataframe 'df' into a dictonary 'task_log_dict'
     task_log_dict = df.to_dict()

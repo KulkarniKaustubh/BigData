@@ -30,9 +30,9 @@ with open(config_path) as f:
 	summary = json.load(f)
 f.close()
 
-if(os.path.isfile("job_log.csv") and os.path.isfile("task_log.csv")):
-	os.remove("job_log.csv")
-	os.remove("task_log.csv")
+if(os.path.isfile("logs/job_log.csv") and os.path.isfile("logs/task_log.csv")):
+	os.remove("logs/job_log.csv")
+	os.remove("logs/task_log.csv")
 '''
 done
 '''
@@ -41,10 +41,10 @@ def logger(mssg,what):
 	#	old = json.load(r)
 	#old.update(mssg)
 	if(what == 'jobs'):
-		filename = "job_log.csv"
+		filename = "logs/job_log.csv"
 		column_name = ["algo", "job_id", "map_tasks_done", "reduce_tasks_done", "arrival_time", "end_time", "job_done"]
 	else:
-		filename = "task_log.csv"
+		filename = "logs/task_log.csv"
 		column_name = ["algo", "job_id", "worker_id", "task_id", "arrival_time", "end_time", "duration", "done"]
 
 	file_exists = os.path.isfile(filename)
