@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
+if(not os.path.isfile("img/")):
+    os.mkdir("img")
 
 def mean_median_dump(log_dict, where, FILE):
     duration = [x1 - x2 for (x1, x2) in zip(log_dict['end_time'].values(), log_dict['arrival_time'].values())]
