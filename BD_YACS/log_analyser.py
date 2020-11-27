@@ -2,21 +2,24 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-
+import json
 def mean_median_dump(log_dict, where, FILE):
     duration = [x1 - x2 for (x1, x2) in zip(log_dict['end_time'].values(), log_dict['arrival_time'].values())]
     mean_time = np.mean(duration)
     median_time = np.median(duration)
     
-    s = "*" * 25
+    data = json.load(FILE)
     if(where == 1):
         a = "JOB"
+        data["job_completion_time"]["mean"] = mean_time
+        data["job_completion_time"]["median"] = median_time
     else:
         a = "TASK"
-    FILE.write("{} {} {}\n\n".format(s, a, s))
-    FILE.write("Mean {} Completion time : {} seconds\n".format(a, mean_time))
-    FILE.write("Median {} Completion time : {} seconds\n".format(a, median_time))
-    FILE.write("\n{} END {}\n\n\n\n".format(s, s))
+        data["task_completion_time"]["mean"] = mean_time
+        data["task_completion_time"]["median"] = median_time
+    FILE.seek(0)
+    json.dump(data, FILE, indent = 4)
+
 
 
 def plotter(log_dict):
@@ -79,16 +82,22 @@ if not df.empty:
     job_log_dict = df.to_dict()
     # Create the scheduling algorith specific file to store the analysis obtained
     filename = job_log_dict['algo'][0]
-    filename += "_logs_analysis.txt"
+    filename += "_logs_analysis.json"
     filename = "logs/" + filename
     FILE = open(filename, "w")
+    data = {"job_completion_time":{}, "task_completion_time":{}}
+    json.dump(data, FILE, indent = 4)
+    FILE.close()
+    FILE = open(filename, "r+")
     mean_median_dump(job_log_dict, 1, FILE)
+    FILE.close()
 
 # Analysing logs/task_logs.csv
 df = pd.read_csv("logs/task_log.csv")
 if not df.empty:
     # Converting the dataframe 'df' into a dictonary 'task_log_dict'
     task_log_dict = df.to_dict()
+    FILE = open(filename, "r+")
     mean_median_dump(task_log_dict, 2, FILE)
     plotter(task_log_dict)
-FILE.close()
+    FILE.close()
