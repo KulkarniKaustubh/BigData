@@ -86,9 +86,7 @@ class task:
 		self.arrival_time = -1
 		self.end_time = -1
 	def print(self):
-		#print("task_id:  1_M2   duration:  4    status:  True")
 		print("task_id: {0} | duration: {1} | status: {2} ".format(self.task_id, self.duration, self.done))
-		#print("task_id: ", self.task_id, "  duration: ", self.duration, "   status: ", self.done)
 	def to_json(self, job_id, worker_id):
 		temp = {"job_id": job_id, "worker_id": worker_id, "task_id": self.task_id, "duration":self.duration, "done":self.done}
 		return temp
@@ -130,6 +128,7 @@ worker_dict = {}
 num_workers = 0
 
 jobs = []
+jobs_dict = {}
 num_jobs = 0
 '''
 done
@@ -147,7 +146,7 @@ print('Workers init started......')
 work_count = 0
 for line in summary['workers']:
 	workers.append(worker(line['worker_id'], line['slots'], line['port']))
-	worker_dict[line['worker_id']-1] = work_count
+	worker_dict[line['worker_id']-1] = work_count #
 	work_count += 1
 
 for  i in workers:
@@ -217,8 +216,7 @@ def listen_to_requests():
 	request.bind(('',5000)) #listen on port 5000, from requests.py
 	request.listen(3)
 	print("Master ready to recieve job requests from requests.py")
-	k = 0 #as of for now only 3, dont know how to take as many as needed
-
+	job_count = 0
 	while True:
 		connectionSocket, addr = request.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
@@ -232,6 +230,8 @@ def listen_to_requests():
 		for reds_i in mssg['reduce_tasks']:
 			j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
 		jobs.append(j) #add to list of jobs
+		jobs_dict[mssg['job_id']] = job_count
+		job_count += 1
 
 		for t in j.map_tasks:
 			# send_task_to_worker(t, j.job_id)
@@ -277,77 +277,58 @@ def listen_updates():
 
 		if '_M' in task_id: # The task that got completed is a map task
 
-			for job in jobs:
-				if(job.job_id == job_id): # Finding the parent job of the map task
-					for m_task in job.map_tasks:
-						if m_task.task_id == task_id:
-							m_task.done = True # Updating the map task's done is True
-							m_task.arrival_time = arrival_time
-							m_task.end_time = end_time
-							job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
-							# workers[worker_dict[worker_id]].print_slot()
-							print(f"Recieved task from worker: {worker_id}...")
-							workers[worker_dict[worker_id]].mutex.acquire()
-							workers[worker_dict[worker_id]].occupied_slots -= 1
-							workers[worker_dict[worker_id]].print_slot()
-							workers[worker_dict[worker_id]].mutex.release()
-							logger(mssg, 'tasks')
-							break
+			job = jobs[jobs_dict[job_id]]
+			for m_task in job.map_tasks:
+				if m_task.task_id == task_id:
+					m_task.done = True # Updating the map task's done is True
+					m_task.arrival_time = arrival_time
+					m_task.end_time = end_time
+					job.map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
+					# workers[worker_dict[worker_id]].print_slot()
+					print(f"Recieved task from worker: {worker_id}...")
+					workers[worker_dict[worker_id]].mutex.acquire()
+					workers[worker_dict[worker_id]].occupied_slots -= 1
+					workers[worker_dict[worker_id]].print_slot()
+					workers[worker_dict[worker_id]].mutex.release()
+					logger(mssg, 'tasks')
+					break
 
-					#this is to send reduce tasks if all map tasks wer completed
-					if((job.map_tasks_done == len(job.map_tasks)) and (job.job_done == False)):
-						# send_task_to_worker(t, j.job_id)
-						for t in job.reduce_tasks:
-							sender_thread1 = threading.Thread(target=send_task_to_worker,args=(t,job.job_id,))
-							sender_thread1.start()
-							sender_thread1.join()
-			# jobs[int(job_id)].print() #added this to check i real task.done is getting updated
+			#this is to send reduce tasks if all map tasks wer completed
+			if((job.map_tasks_done == len(job.map_tasks)) and (job.job_done == False)):
+				# send_task_to_worker(t, j.job_id)
+				for t in job.reduce_tasks:
+					sender_thread1 = threading.Thread(target=send_task_to_worker,args=(t,job.job_id,))
+					sender_thread1.start()
+					sender_thread1.join()
+			jobs[jobs_dict[job_id]].print() #added this to check i real task.done is getting updated
 
 		else:
 
-			for job in jobs:
-				if(job.job_id == job_id): # Finding the parent job of the reduce task
-					for r_task in job.reduce_tasks:
-						if r_task.task_id == task_id:
-							r_task.done = True #  Checking if the reduce task's done is True
-							r_task.arrival_time = arrival_time
-							r_task.end_time = end_time
-							job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
-							# workers[worker_dict[worker_id]].print_slot()
-							print(f"Recieved task from worker: {worker_id}...")
-							workers[worker_dict[worker_id]].mutex.acquire()
-							workers[worker_dict[worker_id]].occupied_slots -= 1
-							workers[worker_dict[worker_id]].print_slot()
-							workers[worker_dict[worker_id]].mutex.release()
-							logger(mssg, 'tasks')
-							if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)): # To check if the entire job is done
-								job.job_done = True # Updating the job's done to True
-								#job.end_time = datetime.fromtimestamp(r_task.end_time)
-								job.end_time = r_task.end_time
-								temp = job.to_json()
-								logger(temp,'jobs')
-								print('Job ', job_id, ' was processed successfully', end = '\n')
-								print("Arrival: {0}    End: {1}".format(job.arrival_time, job.end_time))
-							break
+			job = jobs[jobs_dict[job_id]]
+			for r_task in job.reduce_tasks:
+				if r_task.task_id == task_id:
+					r_task.done = True #  Checking if the reduce task's done is True
+					r_task.arrival_time = arrival_time
+					r_task.end_time = end_time
+					job.reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
+					# workers[worker_dict[worker_id]].print_slot()
+					print(f"Recieved task from worker: {worker_id}...")
+					workers[worker_dict[worker_id]].mutex.acquire()
+					workers[worker_dict[worker_id]].occupied_slots -= 1
+					workers[worker_dict[worker_id]].print_slot()
+					workers[worker_dict[worker_id]].mutex.release()
+					logger(mssg, 'tasks')
+					if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)): # To check if the entire job is done
+						job.job_done = True # Updating the job's done to True
+						#job.end_time = datetime.fromtimestamp(r_task.end_time)
+						job.end_time = r_task.end_time
+						temp = job.to_json()
+						logger(temp,'jobs')
+						print('Job ', job_id, ' was processed successfully', end = '\n')
+						print("Arrival: {0}    End: {1}".format(job.arrival_time, job.end_time))
+					break
 
-			# jobs[int(job_id)].print()
-
-		'''
-		for worker in workers:
-			if worker.id == worker_id:
-				worker.occupied_slots -= 1 # Since the task got completed, the slot that was occupied with this task will be free now.
-		'''
-
-
-		# To check if the entire job is done
-		# for job in jobs:
-
-		# 	if(job.job_id == job_id): #searching for job_id
-		# 		if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)):
-		# 			job.job_done = True # Updating the job's done to True
-		# 			print('Job ', job_id, ' was processed successfully', end = '\n')
-
-		# 		break
+			jobs[jobs_dict[job_id]].print()
 
 		lock.release()
 	update.close()
@@ -364,13 +345,7 @@ listening_worker = threading.Thread(target = listen_updates)
 
 listening_requests.start()
 listening_worker.start()
-'''
-t1.join()
-t2.join()
-listen_to_requests()
-send_task_to_worker()
-listen_updates()
-'''
+
 num_jobs = len(jobs)
 for i in range(num_jobs):
 	print('---------------------------------')
