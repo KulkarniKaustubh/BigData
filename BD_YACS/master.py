@@ -69,6 +69,7 @@ class worker:
 		self.slot = slot
 		self.occupied_slots = 0
 		self.port = port
+		self.mutex = threading.Semaphore(1)
 	def print(self):
 		print("--> Status of worker")
 		print(f"	worker id: {self.id}, worker total slots: {self.slot}, worker occupied slots: {self.occupied_slots} , worker port: {self.port}")
@@ -133,7 +134,7 @@ done
 '''
 all semaphores are declared here
 '''
-lock=threading.Semaphore(1)
+lock = threading.Semaphore(1)
 '''
 done
 '''
@@ -189,18 +190,17 @@ def send_task_to_worker(task,job_id):
 
 	print("\nSending task to worker...")
 	i = scheduling_algo()
+	workers[i].mutex.acquire()
 	port = workers[i].port #eventually do this
-	# need to decrement the slot of worker
-	#port = 4000
-	# lock.acquire()
+	workers[i].occupied_slots+=1
+	workers[i].print()
 	with socket(AF_INET, SOCK_STREAM) as s:
 		s.connect(("localhost", port))
 		send_task = task.to_json(job_id, i)
 		message=json.dumps(send_task)
 		s.send(message.encode())
-	workers[i].occupied_slots+=1
-	workers[i].print()
-	# lock.release()
+	workers[i].mutex.release()
+
 
 def listen_to_requests():
 	#opening this will make port 5000 active and recieve requests from requests.py
@@ -209,27 +209,29 @@ def listen_to_requests():
 	request.listen(3)
 	print("Master ready to recieve job requests from requests.py")
 	k = 0 #as of for now only 3, dont know how to take as many as needed
-
 	while True:
+		# lock.acquire()
 		connectionSocket, addr = request.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
 		print("Received job request from requests.py : ", addr)
 		mssg = json.loads(message)
 
-		# lock.acquire()
+
 		j = job(mssg['job_id']) #init a job
 		for maps_i in mssg['map_tasks']:
 			j.map_tasks.append(task(maps_i['task_id'], maps_i['duration'])) #append all map_tasks of a job, by initing task
 		for reds_i in mssg['reduce_tasks']:
 			j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
+		lock.acquire()
 		jobs.append(j) #add to list of jobs
+		lock.release()
 
 		for t in j.map_tasks:
-			# send_task_to_worker(t, j.job_id)
-			sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.job_id,))
-			sender_thread.start()
-			sender_thread.join()
-
+			# # send_task_to_worker(t, j.job_id)
+			# sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.job_id,))
+			# sender_thread.start()
+			# sender_thread.join()
+			send_task_to_worker(t,j.job_id)
 		# lock.release()
 	request.close()
 
@@ -242,11 +244,11 @@ def listen_updates():
 	print("Master ready to recieve task updates from worker.py")
 
 	while True:
-
+		worker_id=None
 		connectionSocket, addr = update.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
 		mssg = json.loads(message)
-
+		# lock.acquire()
 
 		# taking in the necessary values inorder to increase the slot count and to check if a job has finished executing.
 		print("\n\n")
@@ -263,7 +265,7 @@ def listen_updates():
 			else:
 				print("\nReduce task with taskid ", task_id, " has failed.",end = '\n')
 			return
-		lock.acquire()
+
 		job_id = task_id.split('_')[0]
 
 		if '_M' in task_id: # The task that got completed is a map task
@@ -285,13 +287,22 @@ def listen_updates():
 					if((job.map_tasks_done == len(job.map_tasks)) and (job.job_done == False)):
 						# send_task_to_worker(t, j.job_id)
 						for t in job.reduce_tasks:
-							sender_thread1 = threading.Thread(target=send_task_to_worker,args=(t,job.job_id,))
-							sender_thread1.start()
-							sender_thread1.join()
+							# sender_thread1 = threading.Thread(target=send_task_to_worker,args=(t,job.job_id,))
+							# sender_thread1.start()
+							# sender_thread1.join()
+							send_task_to_worker(t,job.job_id)
+			for worker in workers:
+				if worker.id == worker_id:
+					worker.mutex.acquire()
+					# Since the task got completed, the slot that was occupied with this task will be free now.
+					print("\nRecieved Task update from worker....")
+					# if worker.occupied_slots!=0:
+					worker.occupied_slots -= 1
+					worker.print()
+					worker.mutex.release()
 			# jobs[int(job_id)].print() #added this to check i real task.done is getting updated
 
 		else:
-
 			for job in jobs:
 				if(job.job_id == job_id): # Finding the parent job of the reduce task
 					for r_task in job.reduce_tasks:
@@ -311,31 +322,29 @@ def listen_updates():
 								print('Job ', job_id, ' was processed successfully', end = '\n')
 								print("Arrival: {0}    End: {1}".format(job.arrival_time, job.end_time))
 							# lock.release()
+							for worker in workers:
+								if worker.id == worker_id:
+									worker.mutex.acquire()
+									# Since the task got completed, the slot that was occupied with this task will be free now.
+									print("\nRecieved Task update from worker....")
+									# if worker.occupied_slots!=0:
+									worker.occupied_slots -= 1
+									worker.print()
+									worker.mutex.release()
 							break
 
 			# jobs[int(job_id)].print()
-
-
-		for worker in workers:
-			if worker.id == worker_id:
-				# lock.acquire()
-				worker.occupied_slots -= 1 # Since the task got completed, the slot that was occupied with this task will be free now.
-				print("\nRecieved Task update from worker....")
-				worker.print()
-				# lock.release()
-
-
-		# To check if the entire job is done
-		# for job in jobs:
-
-		# 	if(job.job_id == job_id): #searching for job_id
-		# 		if( (len(job.map_tasks) == job.map_tasks_done) and (len(job.reduce_tasks) == job.reduce_tasks_done)):
-		# 			job.job_done = True # Updating the job's done to True
-		# 			print('Job ', job_id, ' was processed successfully', end = '\n')
-
-		# 		break
-
-		lock.release()
+		# if worker_id:
+		# 	for worker in workers:
+		# 		if worker.id == worker_id:
+		# 			worker.mutex.acquire()
+		# 			# Since the task got completed, the slot that was occupied with this task will be free now.
+		# 			print("\nRecieved Task update from worker....")
+		# 			# if worker.occupied_slots!=0:
+		# 			worker.occupied_slots -= 1
+		# 			worker.print()
+		# 			worker.mutex.release()
+		# # lock.release()
 	update.close()
 '''
 done
