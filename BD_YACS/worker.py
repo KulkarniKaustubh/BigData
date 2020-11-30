@@ -53,7 +53,7 @@ exe_pool = []
 """ initialising TCP socket """
 task_in_socket = socket(AF_INET,SOCK_STREAM) #init a TCP socket
 task_in_socket.bind(('',port)) #listen on port 5000, from requests.py
-task_in_socket.listen(3)
+task_in_socket.listen(200)
 """ done """
 
 """
@@ -77,6 +77,7 @@ def task_in():
 	while True:
 		connectionSocket, addr = task_in_socket.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
+		connectionSocket.close()
 		print()
 		mssg = json.loads(message)
 		#this will apend the task to exe pool
@@ -105,7 +106,10 @@ def task_in():
 """updater code"""
 def task_out(task): # take a task as input to send it through .send
 	with socket(AF_INET, SOCK_STREAM) as s:
+
+		print("created socket")
 		s.connect(("localhost", 5001))
+		print("connected")
 
 		print(f"Sending {task.task_id} completed to master")
 		#generalise the below line
