@@ -159,6 +159,7 @@ print('Workers init ended......')
 function definitions
 '''
 def scheduling_algo():
+	
 	if schedule_algo == 'RANDOM':
 		while True:
 			# listen_updates()
@@ -179,12 +180,11 @@ def scheduling_algo():
 					if workers_sorted[i] == workers[idx]:
 						return idx
 
-			i = (i + 1)%(num_workers - 1)
+			i = (i + 1)%(num_workers)
 
 	if schedule_algo == 'LL':
 		while True:
-			least_loaded = sorted(workers, key = lambda worker: worker.slot - worker.occupied_slots)
-
+			least_loaded = sorted(workers, key = lambda worker: worker.slot - worker.occupied_slots, reverse=True)
 			if least_loaded[0].occupied_slots < least_loaded[0].slot:
 				for idx in range(len(workers)):
 					if least_loaded[0] == workers[idx]:
