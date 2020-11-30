@@ -27,7 +27,7 @@ def plotter(log_dict):
 
     imgname = log_dict['algo'][0] # Getting the name of the algorithm
     imgname += "_plot_image.png" # obtaining the appropriate name to save the plot later
-    #imgname = "img/" + imgname
+    imgname = "img/" + imgname
     doc_heading = log_dict['algo'][0] + " Scheduling Algorithm Plot"
     doc_name = log_dict['algo'][0] + "_plot.docx"
     
