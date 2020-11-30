@@ -1,12 +1,15 @@
+from docx import Document
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+
 
 def plotter(log_dict):
 
     imgname = log_dict['algo'][0] # Getting the name of the algorithm
     imgname += "_plot.png" # obtaining the appropriate name to save the plot later
     #imgname = "img/" + imgname
+    doc_name = log_dict['algo'][0] + " Scheduling Algorithm Plot"
 
     info = [] # list of tuples (('arrival_time', 'worker_id')) in order to sort in ascending order of 'arrival time'
     graph_dict = {'time' : [], 0 : [], 1 : [], 2 : []} # dictionary to store the number of tasks assigned to each worker every time a task arrives for scheduling 
@@ -54,9 +57,7 @@ def plotter(log_dict):
 
 
 
-        
-
-
+    
     # plotting the graph
     x_axis = list(range(1, len(info) + 1))
     l = np.array(x_axis) 
@@ -73,12 +74,28 @@ def plotter(log_dict):
     plt.close()
 
 
+
+    document = Document()
+    document.add_heading(doc_name,0)
+
+    para_object = document.add_paragraph('Arrival time \t\t\t x-axis equivalents\n')
+    for i,j in zip(graph_dict['time'], x_axis):
+        para_object.add_run(str(i))
+        para_object.add_run("\t\t")
+        para_object.add_run(str(j))
+        para_object.add_run("\n")
+    
+    para_object.add_run("\n\n")
+    document.add_picture(imgname)
+    document.save('report.docx')
+
+
     
 
 
 
 
-df = pd.read_csv("task_log.csv")
+df = pd.read_csv("logs/task_log.csv")
 if not df.empty:
     # Converting the dataframe 'df' into a dictonary 'task_log_dict'
     task_log_dict = df.to_dict()
