@@ -11,4 +11,4 @@ gnome-terminal -- python3 worker.py 4002 3
 
 gnome-terminal -- python3 master1.py config.json RANDOM
 
-gnome-terminal -- python3 requests.py 15
+gnome-terminal -- python3 requests.py 30

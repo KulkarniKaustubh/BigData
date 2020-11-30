@@ -53,7 +53,7 @@ exe_pool = []
 """ initialising TCP socket """
 task_in_socket = socket(AF_INET,SOCK_STREAM) #init a TCP socket
 task_in_socket.bind(('',port)) #listen on port 5000, from requests.py
-task_in_socket.listen(200)
+task_in_socket.listen(3)
 """ done """
 
 """
@@ -77,6 +77,7 @@ def task_in():
 	while True:
 		connectionSocket, addr = task_in_socket.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
+		connectionSocket.shutdown(SHUT_RDWR)
 		connectionSocket.close()
 		print()
 		mssg = json.loads(message)
@@ -89,6 +90,7 @@ def task_in():
 		# exe_pool.append(received_task)
 		thread_dict[f"{received_task.task_id}"] = threading.Thread(target = task_exec, args = (received_task,))
 		thread_dict[f"{received_task.task_id}"].start()
+		# thread_dict[f"{received_task.task_id}"].join()
 		# lock.release()
 
 		#sample_test.print()
@@ -105,8 +107,9 @@ def task_in():
 
 """updater code"""
 def task_out(task): # take a task as input to send it through .send
+	# lock.acquire()
 	with socket(AF_INET, SOCK_STREAM) as s:
-
+		# s.bind(('',5001+int(task.task_id.split('_')[0])))
 		print("created socket")
 		s.connect(("localhost", 5001))
 		print("connected")
@@ -120,7 +123,8 @@ def task_out(task): # take a task as input to send it through .send
 		s.send(message.encode())
 
 		print(f"Sent task {task.task_id} completed...")
-
+		s.close()
+	# lock.release()
 	# with socket(AF_INET, SOCK_STREAM) as s:
 	# 	s.connect(("localhost", 5001))
 	# 	print("Sending update to master")
@@ -137,16 +141,16 @@ def task_out(task): # take a task as input to send it through .send
 """executor code"""
 def task_exec(task):
 	while not task.done and task.duration != 0:
-		time.sleep(1)
+		time.sleep(0.6) # time.sleep(1)
 		task.duration -= 1
 		if task.duration == 0:
 			task.end_time = datetime.now().timestamp()
 			task.done=True
 			task.print()
 
-	#lock.acquire()
+	lock.acquire()
 	task_out(task)
-	#lock.release()
+	lock.release()
 
 
 	# while True:
