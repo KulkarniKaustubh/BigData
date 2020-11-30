@@ -2,6 +2,25 @@ from docx import Document
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import json
+
+def mean_median_dump(log_dict, where, FILE):
+    duration = [x1 - x2 for (x1, x2) in zip(log_dict['end_time'].values(), log_dict['arrival_time'].values())]
+    mean_time = np.mean(duration)
+    median_time = np.median(duration)
+    
+    data = json.load(FILE)
+    if(where == 1):
+        a = "JOB"
+        data["job_completion_time"]["mean"] = mean_time
+        data["job_completion_time"]["median"] = median_time
+    else:
+        a = "TASK"
+        data["task_completion_time"]["mean"] = mean_time
+        data["task_completion_time"]["median"] = median_time
+    FILE.seek(0)
+    json.dump(data, FILE, indent = 4)
 
 
 def plotter(log_dict):
@@ -90,6 +109,25 @@ def plotter(log_dict):
     document.save('report.docx')
 
 
+# Analysing logs/job_logs.csv
+df = pd.read_csv("logs/job_log.csv")
+if not df.empty: 
+    # Converting the dataframe 'df' into a dictonary 'job_log_dict'
+    job_log_dict = df.to_dict()
+    # Create the scheduling algorith specific file to store the analysis obtained
+    filename = job_log_dict['algo'][0]
+    filename += "_logs_analysis"
+    filename = "logs/" + filename
+    document = Document()
+    doc_name = log_dict['algo'][0] + " Scheduling Algorithm Analysis"
+    document.add_heading(doc_name,0)
+    FILE = open(filename, "w")
+    data = {"job_completion_time":{}, "task_completion_time":{}}
+    json.dump(data, FILE, indent = 4)
+    FILE.close()
+    FILE = open(filename, "r+")
+    mean_median_dump(job_log_dict, 1, FILE)
+    FILE.close()
     
 
 
@@ -103,3 +141,13 @@ if not df.empty:
     #mean_median_dump(task_log_dict, 2, FILE)
     plotter(task_log_dict)
     #FILE.close()
+
+# Analysing logs/task_logs.csv
+df = pd.read_csv("logs/task_log.csv")
+if not df.empty:
+    # Converting the dataframe 'df' into a dictonary 'task_log_dict'
+    task_log_dict = df.to_dict()
+    FILE = open(filename, "r+")
+    mean_median_dump(task_log_dict, 2, FILE)
+    plotter(task_log_dict)
+    FILE.close()

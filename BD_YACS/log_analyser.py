@@ -25,19 +25,31 @@ def mean_median_dump(log_dict, where, FILE):
 def plotter(log_dict):
 
     imgname = log_dict['algo'][0] # Getting the name of the algorithm
-    imgname += "_plot.png" # obtaining the appropriate name to save the plot later
-    imgname = "img/" + imgname
+    imgname += "_plot_image.png" # obtaining the appropriate name to save the plot later
+    #imgname = "img/" + imgname
+    doc_heading = log_dict['algo'][0] + " Scheduling Algorithm Plot"
+    doc_name = log_dict['algo'][0] + "_plot.docx"
+    
 
     info = [] # list of tuples (('arrival_time', 'worker_id')) in order to sort in ascending order of 'arrival time'
     graph_dict = {'time' : [], 0 : [], 1 : [], 2 : []} # dictionary to store the number of tasks assigned to each worker every time a task arrives for scheduling 
+    check_if_done = dict()
+    end_time_list = []
 
     for i, j in zip(log_dict['arrival_time'].values(), log_dict['worker_id'].values()):
         info.append((i, j)) # populating the list of tuples
 
-    info.sort(key = lambda x : x[0]) # sorting the list of tuples
+    for i, j in zip(log_dict['end_time'].values(), log_dict['worker_id'].values()):
+        check_if_done[i] = j
+        end_time_list.append(i)
     
+
+    info.sort(key = lambda x : x[0]) # sorting the list of tuples
+    latest_arr_time = 0
+
     for j, i in info:
 
+        latest_arr_time = j
         worker_list = [0, 1, 2] # list of all the workers
         graph_dict['time'].append(j) # keying in the arrival time of each task
 
@@ -56,7 +68,16 @@ def plotter(log_dict):
             else:
                 graph_dict[k].append(graph_dict[k][top]) # keeping the new task count of the other workers same as the previously updated task count
 
+        for end_time in end_time_list:
+            if end_time <= j:
+                worker_id = check_if_done[end_time]
+                top = len(graph_dict[worker_id]) - 1
+                graph_dict[worker_id][top] = graph_dict[worker_id][top] - 1
+                end_time_list.remove(end_time) 
 
+
+
+    
     # plotting the graph
     x_axis = list(range(1, len(info) + 1))
     l = np.array(x_axis) 
@@ -71,6 +92,22 @@ def plotter(log_dict):
     plt.savefig(imgname)
     plt.show(block=False)
     plt.close()
+
+
+
+    document = Document()
+    document.add_heading(doc_heading,0)
+
+    para_object = document.add_paragraph('Arrival time \t\t\t x-axis equivalents\n')
+    for i,j in zip(graph_dict['time'], x_axis):
+        para_object.add_run(str(i))
+        para_object.add_run("\t\t")
+        para_object.add_run(str(j))
+        para_object.add_run("\n")
+    
+    para_object.add_run("\n\n")
+    document.add_picture(imgname)
+    document.save(doc_name)
 
     
 
