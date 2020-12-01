@@ -174,10 +174,22 @@ def scheduling_algo(): # returns worker id of selected worker
 				return workers[i].id
 
 	if schedule_algo == 'RR':
+		global curr_worker_to_send
 		workers_sorted = sorted(workers, key=lambda worker: worker.id)
 		while True:
 			if workers_sorted[curr_worker_to_send].occupied_slots < workers_sorted[curr_worker_to_send].slot:
-				return workers_sorted[curr_worker_to_send].id
+				worker_index = curr_worker_to_send
+
+				lock_count.acquire()
+				curr_worker_to_send = (curr_worker_to_send + 1)%(len(workers_sorted))
+				lock_count.release()
+
+				# print('-'*60)
+				# print(f'Current worker to send : {worker index}')
+				# print('-'*60)
+
+				return workers_sorted[worker_index].id
+
 			lock_count.acquire()
 			curr_worker_to_send = (curr_worker_to_send + 1)%(len(workers_sorted))
 			lock_count.release()
@@ -206,7 +218,9 @@ def send_task_to_worker(task,job_id): # sends a task to a worker (selected by sc
 		send_task = task.to_json(job_id, i)
 		message=json.dumps(send_task)
 		s.send(message.encode())
-		print(f"sent task : {task.task_id} to worker : {i}")
+		print('-'*60)
+		print(f"Sent task : {task.task_id} to worker : {i}")
+		print('-'*60)
 
 def listen_to_requests(): # listens for job service requests
 	request = socket(AF_INET,SOCK_STREAM) #init a TCP socket
@@ -284,7 +298,9 @@ def listen_to_updates(): # listens for updates from workers
 					jobs[jobs_dict[job_id]].map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
 					lock_jobs.release()
 
+					print('-'*30)
 					print(f"Recieved task from worker: {worker_id}...")
+					print('-'*30)
 
 					lock_workers.acquire()
 					workers[worker_dict[worker_id]].occupied_slots -= 1
@@ -302,7 +318,7 @@ def listen_to_updates(): # listens for updates from workers
 				jobs_with_maps_done.append(jobs[jobs_dict[job_id]])
 				lock_s.release()
 
-			jobs[jobs_dict[job_id]].print() #added this to check i real task.done is getting updated
+			# jobs[jobs_dict[job_id]].print() #added this to check i real task.done is getting updated
 
 		else:
 
@@ -336,7 +352,7 @@ def listen_to_updates(): # listens for updates from workers
 						print("Arrival: {0}    End: {1}".format(jobs[jobs_dict[job_id]].arrival_time, jobs[jobs_dict[job_id]].end_time))
 					break
 
-			jobs[jobs_dict[job_id]].print()
+			# jobs[jobs_dict[job_id]].print()
 		connectionSocket.close()
 	update.close()
 
