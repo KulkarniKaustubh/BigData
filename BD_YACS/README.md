@@ -1,39 +1,13 @@
 # YACS - Yet Another Centralized Scheduler
 
-### Execution
-Run on 3+2 diff terminals  
-
-```sh
-python3 worker.py 4000 1
-python3 worker.py 4001 2
-python3 worker.py 4002 3
-python3 master.py config.json RANDOM
-python3 requests.py 3
-python3 log_analyser.py 
-```
-or just execute(as of for now, script tested on ubuntu)  
-
-```sh
-sh run.sh
-python3 log_analyser.py
-```
-
-### Ports 
-```
-5000 - requests.py ->  master.py  
-4001 - master.py   ->  worker.py 4000 1  
-4002 - master.py   ->  worker.py 4001 2  
-4003 - master.py   ->  worker.py 4002 3
-5001 - worker.py   ->  master.py
-```  
-
 #### Whats left!?
-- [ ] job_id being searched through list O(n). Implement a dictionary to get it in O(1) - later
+- [x] job_id being searched through list O(n). Implement a dictionary to get it in O(1)
 - [x] Schedule algos
 - [x] Port 5000
 - [x] Port 5001
-- [ ] Usage of threads
-- [ ] Updation of slots, after and before worker allocation
-- [ ] Plot graphs for logging purposes (is it working properly?)
-- [ ] Changing config.py file + testing edge cases
-- [ ] Report
+- [x] Usage of threads
+- [x] Updation of slots, after and before worker allocation
+- [x] Plot graphs for logging purposes (is it working properly?)
+- [x] Changing config.py file + testing edge cases
+- [x] Report
+- [x] Testing with config.py

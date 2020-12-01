@@ -1,0 +1,31 @@
+# YACS - Yet Another Centralized Scheduler
+
+### Execution
+Code tested and debugged on ubuntu 20.04  
+
+Run on 5 diff terminals  
+
+```sh
+sh run.sh
+python3 log_analyser.py
+```
+or execute on 5 different terminals, in the respective order.  
+
+```sh
+python3 worker.py 4000 1
+python3 worker.py 4001 2
+python3 worker.py 4002 3
+python3 master.py config.json RANDOM
+python3 requests.py 3
+python3 log_analyser.py 
+```
+
+
+### Ports 
+```
+5000 - requests.py ->  master.py  
+4001 - master.py   ->  worker.py 4000 1  
+4002 - master.py   ->  worker.py 4001 2  
+4003 - master.py   ->  worker.py 4002 3
+5001 - worker.py   ->  master.py
+```  
