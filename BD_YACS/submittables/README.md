@@ -9,7 +9,11 @@ Run on 5 diff terminals
 sh run.sh
 python3 log_analyser.py
 ```
-or execute on 5 different terminals, in the respective order.  
+or explicitly create directories:
+```sh
+mkdir logs/ img/
+```
+and run the following commands on 5 different terminals, in the respective order.  
 
 ```sh
 python3 worker.py 4000 1
