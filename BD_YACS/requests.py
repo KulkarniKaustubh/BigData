@@ -52,5 +52,4 @@ if __name__ == '__main__':
 		last_request_time=time.time()
 		request_number+=1
 
-time.sleep(10)
-
+time.sleep(100000)

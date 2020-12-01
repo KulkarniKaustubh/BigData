@@ -36,48 +36,22 @@ if(os.path.isfile("logs/job_log.csv") and os.path.isfile("logs/task_log.csv")):
 '''
 done
 '''
-def logger(mssg,what):
-	#with open("log.json") as r:
-	#	old = json.load(r)
-	#old.update(mssg)
-	if(what == 'jobs'):
-		filename = "logs/job_log.csv"
-		column_name = ["algo", "job_id", "map_tasks_done", "reduce_tasks_done", "arrival_time", "end_time", "job_done"]
-	else:
-		filename = "logs/task_log.csv"
-		column_name = ["algo", "job_id", "worker_id", "task_id", "arrival_time", "end_time", "duration", "done"]
-
-	file_exists = os.path.isfile(filename)
-	mssg["algo"] = schedule_algo
-	with open(filename, 'a') as file:
-		writer = csv.DictWriter(file, delimiter=',', lineterminator='\n',fieldnames=column_name)
-
-		if (not file_exists):
-			writer.writeheader()
-
-		writer.writerow(mssg)
-	file.close()
-
 
 '''
 class definitions
 '''
-
-class worker:
+class Worker:
 	def __init__(self, wid, slot, port):
 		self.id = wid
 		self.slot = slot
 		self.occupied_slots = 0
 		self.port = port
-		self.mutex = threading.Semaphore(1) # to lock worker information
 	def print(self):
 		print(self.id, self.slot, self.port, sep=', ')
 	def print_slot(self):
 		print(f"--> Status of worker\n	worker id: {self.id}, worker total slots: {self.slot}, worker occupied slots: {self.occupied_slots} , worker port: {self.port}")
 
-
-
-class task:
+class Task:
 	def __init__(self, task_id, duration):
 		self.task_id = task_id
 		self.duration = duration
@@ -90,7 +64,7 @@ class task:
 		temp = {"job_id": job_id, "worker_id": worker_id, "task_id": self.task_id, "duration":self.duration, "done":self.done}
 		return temp
 
-class job:
+class Job:
 	def __init__(self, job_id):
 		self.job_id = job_id
 		self.map_tasks = []
@@ -122,14 +96,16 @@ done
 '''
 global variables are declared here
 '''
-workers = [] #list of worker objects
-worker_dict = {} #key , value where key=> worker_id and value is index in the above workers list
+workers = [] # list of worker objects
+worker_dict = {} # key , value where key=> worker_id and value is index in the above workers list
 curr_worker_to_send=0
 num_workers = 0
 
-jobs = []# list of jobs
-jobs_dict = {}# key , value where key=> job id and value is index in the above jobs list
+jobs = [] # list of jobs
+jobs_dict = {} # key , value where key=> job id and value is index in the above jobs list
 num_jobs = 0
+
+jobs_with_maps_done=[] # holds jobs with map jobs done
 '''
 done
 '''
@@ -137,102 +113,119 @@ done
 '''
 all semaphores are declared here
 '''
-lock_workers=threading.Semaphore(1) # to lock shared variable 'workers'
-lock_jobs=threading.Semaphore(1) # to lock the shared variable 'jobs'
+lock_workers = threading.Semaphore(1) # to lock shared variable 'workers'
+lock_jobs = threading.Semaphore(1) # to lock the shared variable 'jobs'
+lock_s = threading.Lock() # to lock the shared variable 'jobs_with_maps_done'
+lock_count = threading.Lock() # to lock the shared variable 'curr_worker_to_send'
 '''
 done
 '''
 
+
+'''
+initializing workers_sorted
+'''
+
 print('Workers init started......')
-work_count = 0
+worker_count = 0
 for line in summary['workers']:
-	workers.append(worker(line['worker_id'], line['slots'], line['port']))
-	worker_dict[line['worker_id']] = work_count #
-	work_count += 1
+	workers.append(Worker(line['worker_id'], line['slots'], line['port']))
+	worker_dict[line['worker_id']] = worker_count #
+	worker_count += 1
 
 for  i in workers:
-	worker.print(i)
+	Worker.print(i)
 print(worker_dict)
 num_workers = len(workers)
 print('Workers init ended......')
 
 '''
+init ended
+'''
+
+'''
 function definitions
 '''
-def scheduling_algo():
+def logger(mssg,what): # logs finished tasks and jobs
 
+	if(what == 'jobs'):
+		filename = "logs/job_log.csv"
+		column_name = ["algo", "job_id", "map_tasks_done", "reduce_tasks_done", "arrival_time", "end_time", "job_done"]
+	else:
+		filename = "logs/task_log.csv"
+		column_name = ["algo", "job_id", "worker_id", "task_id", "arrival_time", "end_time", "duration", "done"]
+
+	file_exists = os.path.isfile(filename)
+	mssg["algo"] = schedule_algo
+	with open(filename, 'a') as file:
+		writer = csv.DictWriter(file, delimiter=',', lineterminator='\n',fieldnames=column_name)
+
+		if (not file_exists):
+			writer.writeheader()
+
+		writer.writerow(mssg)
+	file.close()
+
+def scheduling_algo(): # returns worker id of selected worker
 	if schedule_algo == 'RANDOM':
 		while True:
-			# print("Here bitch")
-			# listen_updates()
-			# lock_workers.acquire()
 			i = random.randrange(0, len(workers))
 			if workers[i].occupied_slots < workers[i].slot:
 				return workers[i].id
-			# lock_workers.release()
 
 	if schedule_algo == 'RR':
-		# workers_sorted = sorted(workers, key=lambda worker: worker.id)
-		# num_workers = len(workers)
-		# i = 0
+		workers_sorted = sorted(workers, key=lambda worker: worker.id)
 		while True:
-			if workers[curr_worker_to_send].occupied_slots < workers[curr_worker_to_send].slot:
-				return workers[curr_worker_to_send].id
-			curr_worker_to_send = (curr_worker_to_send + 1)%(num_workers)
+			if workers_sorted[curr_worker_to_send].occupied_slots < workers_sorted[curr_worker_to_send].slot:
+				return workers_sorted[curr_worker_to_send].id
+			lock_count.acquire()
+			curr_worker_to_send = (curr_worker_to_send + 1)%(len(workers_sorted))
+			lock_count.release()
 
 	if schedule_algo == 'LL':
+		least_loaded = sorted(workers, key = lambda worker: worker.slot - worker.occupied_slots, reverse=True)
 		while True:
-			least_loaded = sorted(workers, key = lambda worker: worker.slot - worker.occupied_slots, reverse=True)
 			if least_loaded[0].occupied_slots < least_loaded[0].slot:
 				for idx in range(len(workers)):
 					if least_loaded[0] == workers[idx]:
 						return workers[idx].id
 
-			# time.sleep(1)
 
-def send_task_to_worker(task,job_id):
-	#call this under listen_to_worker since they are in the same thread
+def send_task_to_worker(task,job_id): # sends a task to a worker (selected by scheduling_algo)
 	print("Sending task to worker...")
+	print(f"task id : {task.task_id}")
 	i = scheduling_algo()
- 	#eventually do this
-	# need to decrement the slot of worker
-	#port = 4000
 
 	lock_workers.acquire()
 	port = workers[worker_dict[i]].port
 	workers[worker_dict[i]].occupied_slots += 1
-	workers[worker_dict[i]].print_slot()
 	lock_workers.release()
 
 	with socket(AF_INET, SOCK_STREAM) as s:
-		# workers[i].print_slot()
 		s.connect(("localhost", port))
 		send_task = task.to_json(job_id, i)
 		message=json.dumps(send_task)
 		s.send(message.encode())
-	# workers[i].mutex.release()
+		print(f"sent task : {task.task_id} to worker : {i}")
 
-
-def listen_to_requests():
-	#opening this will make port 5000 active and recieve requests from requests.py
+def listen_to_requests(): # listens for job service requests
 	request = socket(AF_INET,SOCK_STREAM) #init a TCP socket
 	request.bind(('',5000)) #listen on port 5000, from requests.py
-	request.listen(3)
+	request.listen(5)
 	print("Master ready to recieve job requests from requests.py")
 	job_count = 0
 	while True:
 		connectionSocket, addr = request.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
-		# print("Received job request from requests.py : ", addr)
+		print("Received job request from requests.py : ", addr)
 		mssg = json.loads(message)
 		connectionSocket.shutdown(SHUT_RDWR)
 		connectionSocket.close()
-
-		j = job(mssg['job_id']) #init a job
+		j = Job(mssg['job_id']) #init a job
 		for maps_i in mssg['map_tasks']:
-			j.map_tasks.append(task(maps_i['task_id'], maps_i['duration'])) #append all map_tasks of a job, by initing task
+			j.map_tasks.append(Task(maps_i['task_id'], maps_i['duration'])) #append all map_tasks of a job, by initing task
 		for reds_i in mssg['reduce_tasks']:
-			j.reduce_tasks.append(task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
+			j.reduce_tasks.append(Task(reds_i['task_id'], reds_i['duration']))#append all red_tasks of a job, by initing task
 
 		lock_jobs.acquire()
 		jobs.append(j) #add to list of jobs
@@ -241,36 +234,24 @@ def listen_to_requests():
 		lock_jobs.release()
 
 		for t in j.map_tasks:
-			# sender_thread = threading.Thread(target=send_task_to_worker,args=(t,j.job_id,))
-			# sender_thread.start()
-			# sender_thread.join()
 			send_task_to_worker(t,j.job_id)
 
 	request.close()
 
-# def scheduler():
-# 	while True:
-# 		for j in jobs:
-# 			if j.map_tasks_done!=len(j.map_tasks):
-# 				for map_task in j.map_tasks:
-# 					if map_task.done !=True:
-# 						send_task_to_worker(map_task,j.job_id)
 
-def listen_updates():
+def listen_to_updates(): # listens for updates from workers
 	#opening this will make port 5001 active and recieve updates from worker.py
 	update = socket(AF_INET, SOCK_STREAM) #init a TCP socket
 	update.bind(('', 5001))
-	update.listen(3)
+	update.listen(5)
 	print("Master ready to recieve task updates from worker.py")
-
 	while True:
-
-		connectionSocket, addr = update.accept()
+		try:
+			connectionSocket, addr = update.accept()
+		except:
+			print("Not accepting")
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
 		mssg = json.loads(message)
-		connectionSocket.shutdown(SHUT_RDWR)
-		connectionSocket.close()
-		# lock.acquire()
 		# taking in the necessary values inorder to increase the slot count and to check if a job has finished executing.
 		print("\n\n")
 		print(mssg)
@@ -290,7 +271,6 @@ def listen_updates():
 
 		job_id = task_id.split('_')[0]
 
-
 		if '_M' in task_id: # The task that got completed is a map task
 
 			job = jobs[jobs_dict[job_id]]
@@ -304,25 +284,25 @@ def listen_updates():
 					jobs[jobs_dict[job_id]].map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
 					lock_jobs.release()
 
-					# workers[worker_dict[worker_id]].print_slot()
 					print(f"Recieved task from worker: {worker_id}...")
 
 					lock_workers.acquire()
 					workers[worker_dict[worker_id]].occupied_slots -= 1
 					workers[worker_dict[worker_id]].print_slot()
 					lock_workers.release()
+
 					logger(mssg, 'tasks')
 					break
 
-			#this is to send reduce tasks if all map tasks wer completed
+			# this is to send reduce tasks if all map tasks wer completed
 			if((jobs[jobs_dict[job_id]].map_tasks_done == len(jobs[jobs_dict[job_id]].map_tasks)) and (jobs[jobs_dict[job_id]].job_done == False)):
-				# send_task_to_worker(t, j.job_id)
-				for t in jobs[jobs_dict[job_id]].reduce_tasks:
-					# sender_thread1 = threading.Thread(target=send_task_to_worker,args=(t,job.job_id,))
-					# sender_thread1.start()
-					# sender_thread1.join()
-					send_task_to_worker(t,jobs[jobs_dict[job_id]].job_id)
-			# jobs[jobs_dict[job_id]].print() #added this to check i real task.done is getting updated
+
+				# if all map tasks are done in current job , append job to global variable
+				lock_s.acquire()
+				jobs_with_maps_done.append(jobs[jobs_dict[job_id]])
+				lock_s.release()
+
+			jobs[jobs_dict[job_id]].print() #added this to check i real task.done is getting updated
 
 		else:
 
@@ -337,23 +317,17 @@ def listen_updates():
 					jobs[jobs_dict[job_id]].reduce_tasks_done += 1 # Incrementing the number of reduce tasks completed for that particular job
 					lock_jobs.release()
 
-					# workers[worker_dict[worker_id]].print_slot()
 					print(f"Recieved task from worker: {worker_id}...")
-					# workers[worker_dict[worker_id]].mutex.acquire()
 
 					lock_workers.acquire()
-					# print("\nlock acquired\n")
 					workers[worker_dict[worker_id]].occupied_slots -= 1
 					workers[worker_dict[worker_id]].print_slot()
 					lock_workers.release()
 
-					# print("\nlock released\n")
-					# workers[worker_dict[worker_id]].mutex.release()
 					logger(mssg, 'tasks')
 					if( (len(jobs[jobs_dict[job_id]].map_tasks) == jobs[jobs_dict[job_id]].map_tasks_done) and (len(jobs[jobs_dict[job_id]].reduce_tasks) == jobs[jobs_dict[job_id]].reduce_tasks_done)): # To check if the entire job is done
 						lock_jobs.acquire()
 						jobs[jobs_dict[job_id]].job_done = True # Updating the job's done to True
-						#job.end_time = datetime.fromtimestamp(r_task.end_time)
 						jobs[jobs_dict[job_id]].end_time = r_task.end_time
 						lock_jobs.release()
 						temp = jobs[jobs_dict[job_id]].to_json()
@@ -362,10 +336,19 @@ def listen_updates():
 						print("Arrival: {0}    End: {1}".format(jobs[jobs_dict[job_id]].arrival_time, jobs[jobs_dict[job_id]].end_time))
 					break
 
-			# jobs[jobs_dict[job_id]].print()
-
-		# lock.release()
+			jobs[jobs_dict[job_id]].print()
+		connectionSocket.close()
 	update.close()
+
+def send_reduce_tasks(): # sends reduce tasks to workers
+	while True:
+		if len(jobs_with_maps_done) != 0:
+			lock_s.acquire()
+			job=jobs_with_maps_done.pop(0)
+			lock_s.release()
+			for task in job.reduce_tasks:
+				send_task_to_worker(task,job.job_id)
+
 '''
 done
 '''
@@ -374,16 +357,20 @@ done
 running master
 '''
 
+''' initializing all threads '''
 listening_requests = threading.Thread(target = listen_to_requests)
-listening_worker = threading.Thread(target = listen_updates)
+listening_worker = threading.Thread(target = listen_to_updates)
+sending_reduce = threading.Thread(target = send_reduce_tasks)
 
-
+''' starting all threads '''
 listening_requests.start()
 listening_worker.start()
+sending_reduce.start()
 
-num_jobs = len(jobs)
-for i in range(num_jobs):
-	print('---------------------------------')
-	jobs[i].print()
+''' joining all threads '''
+listening_requests.join()
+listening_worker.join()
+sending_reduce.join()
+
 
 time.sleep(10)
