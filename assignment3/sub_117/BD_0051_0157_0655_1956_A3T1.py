@@ -8,7 +8,6 @@ path=''
 if sys.argv[3]: # might have to change it to argv[3]
 	path=sys.argv[3]
 
-fil=path
 sc=SparkContext('local',"task1")
 
 rdd=sc.textFile(path) # stores it as rdd automatically
@@ -39,4 +38,3 @@ avg_strokes_unrecRdd=unrecRdd.map(lambda x : int(x[columns['Total_Strokes']])).m
 
 print("{0:.5f}".format(avg_strokes_recRdd))
 print("{0:.5f}".format(avg_strokes_unrecRdd))
-
