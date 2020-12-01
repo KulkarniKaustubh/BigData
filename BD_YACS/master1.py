@@ -29,9 +29,9 @@ with open(config_path) as f:
 	summary = json.load(f)
 f.close()
 
-if(os.path.isfile("logs/job_log.csv") and os.path.isfile("logs/task_log.csv")):
-	os.remove("logs/job_log.csv")
-	os.remove("logs/task_log.csv")
+# if(os.path.isfile("logs/job_log.csv") and os.path.isfile("logs/task_log.csv")):
+# 	os.remove("logs/job_log.csv")
+# 	os.remove("logs/task_log.csv")
 
 ''' done '''
 
@@ -187,8 +187,8 @@ def scheduling_algo(): # returns worker id of selected worker based on the sched
 			lock_count.release()
 
 	if schedule_algo == 'LL':
-		least_loaded = sorted(workers, key = lambda worker: worker.slot - worker.occupied_slots, reverse=True)
 		while True:
+			least_loaded = sorted(workers, key = lambda worker: worker.slot - worker.occupied_slots, reverse=True)
 			if least_loaded[0].occupied_slots < least_loaded[0].slot:
 				for idx in range(len(workers)):
 					if least_loaded[0] == workers[idx]:

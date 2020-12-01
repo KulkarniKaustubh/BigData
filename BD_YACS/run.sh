@@ -9,6 +9,6 @@ gnome-terminal -- python3 worker1.py 4000 1
 gnome-terminal -- python3 worker1.py 4001 2
 gnome-terminal -- python3 worker1.py 4002 3
 
-gnome-terminal -- python3 master1.py config.json RANDOM
+gnome-terminal -- python3 master1.py config.json LL
 
-gnome-terminal -- python3 requests.py 2
+gnome-terminal -- python3 requests.py 10
