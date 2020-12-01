@@ -3,7 +3,7 @@
 ### Execution
 Code tested and debugged on ubuntu 20.04  
 
-Run on 5 diff terminals  
+Run the following script
 
 ```sh
 sh run.sh
