@@ -7,19 +7,9 @@ from datetime import datetime
 
 
 """ parsing arguments"""
-try:
-	port = int(sys.argv[1])
-except IndexError:
-	print("Worker port not given")
-	print("Exiting ......")
-	exit()
+port = int(sys.argv[1])
 
-try:
-	work_id = sys.argv[2]
-except IndexError:
-	print("Worker id not passed")
-	print("Exiting ......")
-	exit()
+work_id = sys.argv[2]
 """ done"""
 
 
@@ -49,13 +39,6 @@ class Task:
 exe_pool = []
 """ done """
 
-
-""" initialising TCP socket """
-task_in_socket = socket(AF_INET,SOCK_STREAM) #init a TCP socket
-task_in_socket.bind(('',port)) #listen on port 5000, from requests.py
-task_in_socket.listen(3)
-""" done """
-
 """
 All semaphores are defined here
 """
@@ -73,12 +56,14 @@ listener code
 """
 def task_in():
 	thread_dict = {}
-
+	task_in_socket = socket(AF_INET,SOCK_STREAM) #init a TCP socket
+	task_in_socket.bind(('',port)) #listen on port 5000, from requests.py
+	task_in_socket.listen(3)
 	while True:
 		connectionSocket, addr = task_in_socket.accept()
 		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
-		connectionSocket.shutdown(SHUT_RDWR)
-		connectionSocket.close()
+		#connectionSocket.shutdown(SHUT_RDWR)
+		#connectionSocket.close()
 		print()
 		mssg = json.loads(message)
 		#this will apend the task to exe pool
@@ -92,13 +77,6 @@ def task_in():
 		thread_dict[f"{received_task.task_id}"].start()
 		# thread_dict[f"{received_task.task_id}"].join()
 		# lock.release()
-
-		#sample_test.print()
-		#this is a dummy line to mimic completion of the task
-		"""sample_test.done = True
-		sample_test.print()"""
-		#task_exec()
-		#need to add task to exe pool and do the execution
 
 """listener code ends"""
 
@@ -123,58 +101,33 @@ def task_out(task): # take a task as input to send it through .send
 		s.send(message.encode())
 
 		print(f"Sent task {task.task_id} completed...")
-		s.close()
-	# lock.release()
-	# with socket(AF_INET, SOCK_STREAM) as s:
-	# 	s.connect(("localhost", 5001))
-	# 	print("Sending update to master")
-	# 	#generalise the below line
-	# 	task = Task.to_json(exe_pool[0])      ### won't work as of now ...till master is ready to accept updates.
-	# 	message=json.dumps(send_task)
-	# 	s.send(message.encode())
-	# 	print('done...')
-"""updater code ends"""
+	#s.close()
 
 
 
 
 """executor code"""
 def task_exec(task):
+	
 	while not task.done and task.duration != 0:
-		time.sleep(0.6) # time.sleep(1)
+		time.sleep(0.1) # time.sleep(1)
 		task.duration -= 1
 		if task.duration == 0:
 			task.end_time = datetime.now().timestamp()
 			task.done=True
 			task.print()
-
+	
+	'''
+	time.sleep(task.duration)
+	task.end_time = datetime.now().timestamp()
+	task.done=True
+	task.duration = 0
+	task.print()
+	time.sleep(0.1)
+	'''
 	lock.acquire()
 	task_out(task)
 	lock.release()
-
-
-	# while True:
-	# 	for task in exe_pool:
-	# 		# print('-'*60)
-	# 		print(f"Executing task with id {task.task_id}")
-	#
-	# 		lock.acquire()
-	# 		task.duration-=1
-	# 		task.print()
-	# 		if task.duration==0:
-	# 			print(f"Task {task.task_id} has finished execution")
-	# 			#task_out(send_task)
-	# 			task.done = True
-	# 			updater_thread=threading.Thread(target=task_out,args=(task,))
-	# 			updater_thread.start()
-	#
-	# 			updater_thread.join()
-	# 			exe_pool.remove(task)
-	# 		lock.release()
-	#
-	# 		print("")
-	# 		print('-'*60)
-
 """executor code ends"""
 
 
@@ -184,6 +137,7 @@ listening_thread = threading.Thread(target = task_in)
 # executing_thread = threading.Thread(target=task_exec)
 #task_in()
 listening_thread.start()
+listening_thread.join()
 
 # executing_thread.start()
 #time.sleep(10)
