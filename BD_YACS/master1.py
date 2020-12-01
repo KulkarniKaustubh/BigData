@@ -201,6 +201,7 @@ def scheduling_algo(): # returns worker id of selected worker
 				for idx in range(len(workers)):
 					if least_loaded[0] == workers[idx]:
 						return workers[idx].id
+			time.sleep(1)
 
 
 def send_task_to_worker(task,job_id): # sends a task to a worker (selected by scheduling_algo)
@@ -219,7 +220,7 @@ def send_task_to_worker(task,job_id): # sends a task to a worker (selected by sc
 		message=json.dumps(send_task)
 		s.send(message.encode())
 		print('-'*60)
-		print(f"Sent task : {task.task_id} to worker : {i}")
+		print(f"Sent task : {task.task_id} to --> worker : {i}")
 		print('-'*60)
 
 def listen_to_requests(): # listens for job service requests
