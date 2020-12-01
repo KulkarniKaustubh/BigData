@@ -1,5 +1,6 @@
 from docx import Document
 import pandas as pd
+from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -12,23 +13,37 @@ def mean_median_dump(log_dict, where):
     str1 = "\t1. Mean Completion Time : " + '{:.4f}'.format(mean_time) + " seconds\n" 
     str2 = "\t2. Median Completion Time : " + '{:.4f}'.format(median_time) + " seconds\n"
 
+
+
     if(where == 1):
         str3 = 'Job Analysis\n'
+        image_name = 'Job_Graph.png'
     else:
         str3 = 'Task Analysis\n'
+        image_name = 'Task_Graph.png'
     
-    p_object = document.add_paragraph("\n" + str3)
+    p_object = document.add_paragraph("")
+    p_object.add_run(str3).bold = True
     p_object.add_run(str1)
     p_object.add_run(str2)
 
+    y = [mean_time, median_time]
+    x = ['mean completion time', 'median completion time']
+
+    plt.bar(x, y) 
+    plt.ylabel("Completion times")
+    plt.xlabel("Measure of Central Tendency") 
+    plt.title("Completion times vs Measures of Central Tendency") 
+    plt.savefig(image_name)
+    plt.show(block=False)
+    plt.close()
+    document.add_picture(image_name)
+
     str3 = 'Plot'
     if(where != 1):
-        p_object = document.add_paragraph(str3)
+        p_object = document.add_paragraph("")
+        p_object.add_run(str3).bold = True
         
-
-
-    
-
 
 def plotter(log_dict):
     imgname = log_dict['algo'][0] # Getting the name of the algorithm
@@ -39,7 +54,7 @@ def plotter(log_dict):
     unique_worker_set = set()
     check_if_done = dict()
     end_time_list = []
-
+    
     for i, j in zip(log_dict['arrival_time'].values(), log_dict['worker_id'].values()):
         info.append((i, j)) # populating the list of tuples
         unique_worker_set.add(j)
@@ -48,16 +63,22 @@ def plotter(log_dict):
         check_if_done[i] = j
         end_time_list.append(i)
 
-    graph_dict = dict()
+    graph_dict = dict()     # dictionary to store the number of tasks assigned to each worker every time a task arrives for scheduling
     graph_dict['time'] = list()
+    graph_dict['date'] = list()
     for i in unique_worker_set:
-        graph_dict[i] = list()           # dictionary to store the number of tasks assigned to each worker every time a task arrives for scheduling
+        graph_dict[i] = list()           
 
     info.sort(key = lambda x : x[0]) # sorting the list of tuples
     for j, i in info:
         worker_list = list(unique_worker_set) # set of all the workers
-        graph_dict['time'].append(j) # keying in the arrival time of each task
+        arrival_time = str(datetime.fromtimestamp(j))
+        date, time = arrival_time.split(' ')
+        graph_dict['time'].append(time) # keying in the arrival time of each task
+        graph_dict['date'].append(date) # keying in the arrival time of each task
 
+        
+        
         if graph_dict[i] == []:
             graph_dict[i] = [1] # when the first task of the job comes in, we initialize the task count of the worker that is alloted this task
         else:
@@ -78,16 +99,16 @@ def plotter(log_dict):
                 top = len(graph_dict[worker_id]) - 1
                 graph_dict[worker_id][top] = graph_dict[worker_id][top] - 1
                 end_time_list.remove(end_time)
-
-        
+    
     # plotting the graph
     x_axis = list(range(1, len(info) + 1))
     legend_text_list = []
     for i in graph_dict.keys():
-        if i != 'time':
+        if i != 'time' and i != 'date':
             plt.plot(x_axis, graph_dict[i])
             legend_text_list.append('Worker ' + str(i))
 
+    plt.xticks(rotation='vertical')
     plt.xlabel('Arrival time of a task')
     plt.ylabel('Number of tasks scheduled for each worker') 
     # plt.legend(['worker 0', 'worker 1', 'worker 2'])
@@ -96,9 +117,19 @@ def plotter(log_dict):
     plt.savefig(imgname)
     plt.show(block=False)
     plt.close()
+
+    para_object = document.add_paragraph('DATE\t\t\tARRIVAL TIME\t\t\tX-AXIS EQUIVALENTS\n')
+    for i,j,k in zip(graph_dict['date'], graph_dict['time'], x_axis):
+        para_object.add_run(str(i))
+        para_object.add_run("\t\t")
+        para_object.add_run(str(j))
+        para_object.add_run("\t\t\t\t")
+        para_object.add_run(str(k))
+        para_object.add_run("\n")
+
     document.add_picture(imgname)
     document.save(doc_name)
-
+    
 
 document = Document()
 
