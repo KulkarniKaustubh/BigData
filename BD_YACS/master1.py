@@ -98,7 +98,7 @@ global variables are declared here
 '''
 workers = [] # list of worker objects
 worker_dict = {} # key , value where key=> worker_id and value is index in the above workers list
-curr_worker_to_send=0
+curr_worker_to_send = 0
 num_workers = 0
 
 jobs = [] # list of jobs
