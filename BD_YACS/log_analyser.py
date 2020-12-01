@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import json
+from docx.enum.text import WD_BREAK
 def mean_median_dump(log_dict, where):
     duration = [x1 - x2 for (x1, x2) in zip(log_dict['end_time'].values(), log_dict['arrival_time'].values())]
     mean_time = np.mean(duration)
@@ -38,6 +39,7 @@ def mean_median_dump(log_dict, where):
     plt.show(block=False)
     plt.close()
     document.add_picture(image_name)
+    document.add_page_break()
 
     str3 = 'Plot'
     if(where != 1):
