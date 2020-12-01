@@ -28,8 +28,8 @@ python3 log_analyser.py
 ### Ports 
 ```
 5000 - requests.py ->  master.py  
-4001 - master.py   ->  worker.py 4000 1  
-4002 - master.py   ->  worker.py 4001 2  
-4003 - master.py   ->  worker.py 4002 3
+4000 - master.py   ->  worker.py 4000 1  
+4001 - master.py   ->  worker.py 4001 2  
+4002 - master.py   ->  worker.py 4002 3
 5001 - worker.py   ->  master.py
 ```  
