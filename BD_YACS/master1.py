@@ -7,11 +7,10 @@ import threading
 from datetime import datetime
 import os
 import csv
+import signal
 
-# dt_object = datetime.fromtimestamp(arrival_time)
-'''
-arguments are parsed here
-'''
+''' arguments are parsed here '''
+
 try:
 	config_path = sys.argv[1]
 except IndexError:
@@ -33,13 +32,11 @@ f.close()
 if(os.path.isfile("logs/job_log.csv") and os.path.isfile("logs/task_log.csv")):
 	os.remove("logs/job_log.csv")
 	os.remove("logs/task_log.csv")
-'''
-done
-'''
 
-'''
-class definitions
-'''
+''' done '''
+
+''' class definitions '''
+
 class Worker:
 	def __init__(self, wid, slot, port):
 		self.id = wid
@@ -89,13 +86,11 @@ class Job:
 	def to_json(self):
 		temp = {"job_id": self.job_id,"map_tasks_done":self.map_tasks_done, "reduce_tasks_done":self.reduce_tasks_done, "arrival_time":self.arrival_time,"end_time":self.end_time,  "job_done":self.job_done}
 		return temp
-'''
-done
-'''
 
-'''
-global variables are declared here
-'''
+''' done '''
+
+''' global variables are declared here '''
+
 workers = [] # list of worker objects
 worker_dict = {} # key , value where key=> worker_id and value is index in the above workers list
 curr_worker_to_send = 0
@@ -106,25 +101,19 @@ jobs_dict = {} # key , value where key=> job id and value is index in the above 
 num_jobs = 0
 
 jobs_with_maps_done=[] # holds jobs with map jobs done
-'''
-done
-'''
 
-'''
-all semaphores are declared here
-'''
+''' done '''
+
+''' all semaphores are declared here '''
+
 lock_workers = threading.Semaphore(1) # to lock shared variable 'workers'
 lock_jobs = threading.Semaphore(1) # to lock the shared variable 'jobs'
 lock_s = threading.Lock() # to lock the shared variable 'jobs_with_maps_done'
 lock_count = threading.Lock() # to lock the shared variable 'curr_worker_to_send'
-'''
-done
-'''
 
+''' done '''
 
-'''
-initializing workers_sorted
-'''
+''' initializing workers_sorted '''
 
 print('Workers init started......')
 worker_count = 0
@@ -139,15 +128,22 @@ print(worker_dict)
 num_workers = len(workers)
 print('Workers init ended......')
 
-'''
-init ended
-'''
+''' init ended '''
 
-'''
-function definitions
-'''
+''' Handling a Keyboard Interrupt '''
+
+def signal_handler(signal, frame):
+	print('-'*60)
+	print('Exiting Master')
+	print('-'*60)
+
+	sys.exit(0)
+
+''' End of handler '''
+
+''' function definitions '''
+
 def logger(mssg,what): # logs finished tasks and jobs
-
 	if(what == 'jobs'):
 		filename = "logs/job_log.csv"
 		column_name = ["algo", "job_id", "map_tasks_done", "reduce_tasks_done", "arrival_time", "end_time", "job_done"]
@@ -166,7 +162,7 @@ def logger(mssg,what): # logs finished tasks and jobs
 		writer.writerow(mssg)
 	file.close()
 
-def scheduling_algo(): # returns worker id of selected worker
+def scheduling_algo(): # returns worker id of selected worker based on the scheduling algorithm
 	if schedule_algo == 'RANDOM':
 		while True:
 			i = random.randrange(0, len(workers))
@@ -183,10 +179,6 @@ def scheduling_algo(): # returns worker id of selected worker
 				lock_count.acquire()
 				curr_worker_to_send = (curr_worker_to_send + 1)%(len(workers_sorted))
 				lock_count.release()
-
-				# print('-'*60)
-				# print(f'Current worker to send : {worker index}')
-				# print('-'*60)
 
 				return workers_sorted[worker_index].id
 
@@ -265,7 +257,7 @@ def listen_to_updates(): # listens for updates from workers
 			connectionSocket, addr = update.accept()
 		except:
 			print("Not accepting")
-		message = connectionSocket.recv(2048) # recieve max of 2048 bytes
+		message = connectionSocket.recv(2048) # receive max of 2048 bytes
 		mssg = json.loads(message)
 		# taking in the necessary values inorder to increase the slot count and to check if a job has finished executing.
 		print("\n\n")
@@ -299,9 +291,9 @@ def listen_to_updates(): # listens for updates from workers
 					jobs[jobs_dict[job_id]].map_tasks_done += 1 # Incrementing the number of map tasks completed for that particular job
 					lock_jobs.release()
 
-					print('-'*30)
+					print('-'*60)
 					print(f"Recieved task from worker: {worker_id}...")
-					print('-'*30)
+					print('-'*60)
 
 					lock_workers.acquire()
 					workers[worker_dict[worker_id]].occupied_slots -= 1
@@ -318,8 +310,6 @@ def listen_to_updates(): # listens for updates from workers
 				lock_s.acquire()
 				jobs_with_maps_done.append(jobs[jobs_dict[job_id]])
 				lock_s.release()
-
-			# jobs[jobs_dict[job_id]].print() #added this to check i real task.done is getting updated
 
 		else:
 
@@ -342,7 +332,9 @@ def listen_to_updates(): # listens for updates from workers
 					lock_workers.release()
 
 					logger(mssg, 'tasks')
-					if( (len(jobs[jobs_dict[job_id]].map_tasks) == jobs[jobs_dict[job_id]].map_tasks_done) and (len(jobs[jobs_dict[job_id]].reduce_tasks) == jobs[jobs_dict[job_id]].reduce_tasks_done)): # To check if the entire job is done
+					# To check if the entire job is done
+					if( (len(jobs[jobs_dict[job_id]].map_tasks) == jobs[jobs_dict[job_id]].map_tasks_done) and
+						(len(jobs[jobs_dict[job_id]].reduce_tasks) == jobs[jobs_dict[job_id]].reduce_tasks_done)):
 						lock_jobs.acquire()
 						jobs[jobs_dict[job_id]].job_done = True # Updating the job's done to True
 						jobs[jobs_dict[job_id]].end_time = r_task.end_time
@@ -351,9 +343,9 @@ def listen_to_updates(): # listens for updates from workers
 						logger(temp,'jobs')
 						print('Job ', job_id, ' was processed successfully', end = '\n')
 						print("Arrival: {0}    End: {1}".format(jobs[jobs_dict[job_id]].arrival_time, jobs[jobs_dict[job_id]].end_time))
+						jobs[jobs_dict[job_id]].print()
 					break
 
-			# jobs[jobs_dict[job_id]].print()
 		connectionSocket.close()
 	update.close()
 
@@ -366,28 +358,26 @@ def send_reduce_tasks(): # sends reduce tasks to workers
 			for task in job.reduce_tasks:
 				send_task_to_worker(task,job.job_id)
 
-'''
-done
-'''
-
-'''
-running master
-'''
-
-''' initializing all threads '''
-listening_requests = threading.Thread(target = listen_to_requests)
-listening_worker = threading.Thread(target = listen_to_updates)
-sending_reduce = threading.Thread(target = send_reduce_tasks)
-
-''' starting all threads '''
-listening_requests.start()
-listening_worker.start()
-sending_reduce.start()
-
-''' joining all threads '''
-listening_requests.join()
-listening_worker.join()
-sending_reduce.join()
+''' done '''
 
 
-time.sleep(10)
+''' Running master '''
+
+if __name__ == '__main__':
+
+	signal.signal(signal.SIGINT, signal_handler)
+
+	''' initializing all threads '''
+	listening_requests = threading.Thread(target = listen_to_requests)
+	listening_worker = threading.Thread(target = listen_to_updates)
+	sending_reduce = threading.Thread(target = send_reduce_tasks)
+
+	''' starting all threads '''
+	listening_requests.start()
+	listening_worker.start()
+	sending_reduce.start()
+
+	''' joining all threads '''
+	listening_requests.join()
+	listening_worker.join()
+	sending_reduce.join()

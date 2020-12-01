@@ -26,11 +26,11 @@ class Task:
 		self.arrival_time = datetime.now().timestamp()
 		self.end_time = -1
 	def print(self):
-		#print("job_id: ",self.job_id, "worker_id: ", self.worker_id, "task_id: ", self.task_id, "  duration: ", self.duration, "  done: ", self.done)
 		print("job_id: ",self.job_id, "worker_id: ", self.worker_id, "task_id: ", self.task_id, "arrival: ", self.arrival_time, "end: ",self.end_time ," duration: ", self.duration, "  done: ", self.done)
 	def to_json(self):
 		temp = {"job_id": self.job_id, "worker_id": self.worker_id, "task_id": self.task_id, "arrival_time": self.arrival_time, "end_time": self.end_time ,"duration": self.duration, "done": self.done}
 		return temp
+
 """ class definitions are over """
 
 
@@ -108,7 +108,7 @@ def task_out(task): # take a task as input to send it through .send
 
 """executor code"""
 def task_exec(task):
-	
+
 	while not task.done and task.duration != 0:
 		time.sleep(0.1) # time.sleep(1)
 		task.duration -= 1
@@ -116,7 +116,7 @@ def task_exec(task):
 			task.end_time = datetime.now().timestamp()
 			task.done=True
 			task.print()
-	
+
 	'''
 	time.sleep(task.duration)
 	task.end_time = datetime.now().timestamp()
