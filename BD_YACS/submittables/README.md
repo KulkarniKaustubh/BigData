@@ -8,8 +8,16 @@ Run the following commands:
 ```sh
 sh run.sh
 python3 log_analyser.py
+```  
+
+or run
+
+```sh
+python3 start_system.py config.json RANDOM 10
+
 ```
-or explicitly create directories:
+or explicitly create directories as last resort
+
 ```sh
 mkdir logs/ img/
 ```
