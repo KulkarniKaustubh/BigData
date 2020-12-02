@@ -26,14 +26,14 @@ except IndexError:
 
 if __name__=="__main__":
 
-    # current_path = os.getcwd()
-    # img_folder_path = os.path.join(current_path,'img')
-    # if not os.path.exists(img_folder_path):
-    #     os.makedirs(img_folder_path)
-    #
-    # log_folder_path = os.path.join(current_path,'logs')
-    # if not os.path.exists(log_folder_path):
-    #     os.makedirs(log_folder_path)
+    current_path = os.getcwd()
+    img_folder_path = os.path.join(current_path,'img')
+    if not os.path.exists(img_folder_path):
+        os.makedirs(img_folder_path)
+
+    log_folder_path = os.path.join(current_path,'logs')
+    if not os.path.exists(log_folder_path):
+        os.makedirs(log_folder_path)
 
 
     with open(config_path) as f:
