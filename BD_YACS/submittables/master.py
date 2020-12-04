@@ -124,7 +124,7 @@ for line in summary['workers']:
 
 for  i in workers:
 	Worker.print(i)
-print(worker_dict)
+# print(worker_dict)
 num_workers = len(workers)
 print('Workers init ended......')
 

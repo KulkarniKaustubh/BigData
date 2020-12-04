@@ -83,7 +83,7 @@ def task_in(port):  # Receives task assigned by the master to this worker
 
 		received_task = Task(mssg['task_id'], mssg['duration'], mssg['job_id'], mssg['worker_id'])
 
-		print(f"Received task {received_task.task_id} from : ", addr)
+		print(f"Received task {received_task.task_id} from : {addr}\n")
 
 		thread_dict[f"{received_task.task_id}"] = threading.Thread(target=task_out, args=(received_task,))
 		thread_dict[f"{received_task.task_id}"].start()
@@ -98,20 +98,23 @@ def task_out(task):  # Takes a task as input and sends an update after its compl
 	task.duration = 0
 	task.end_time = datetime.now().timestamp()
 	task.done = True
+	print('-'*60)
 	task.print()
+	print('-'*60)
+	print('\n')
 
 	send_task = Task.to_json(task)
 	message = json.dumps(send_task)
 
 	s = socket()
-	print("created socket")
+	# print("created socket")
 
 	try:
 		s.connect(('127.0.0.1',5001))
 		s.send(message.encode())
-		print(f"Sent task {task.task_id} completed...")
+		print(f"Sent task {task.task_id} completed...\n")
 	except:
-		print("Could not connect to master")
+		print("Could not connect to master\n")
 
 	s.close()
 
