@@ -48,4 +48,4 @@ if __name__=="__main__":
     os.system(f"gnome-terminal -- python3 master.py {config_path} {schedule_algo}")
 
     # spawning requests generator
-    os.system(f"gnome-terminal -- python3 requests.py {num_requests}")
+    os.system(f"gnome-terminal -- python3 requests_eval.py {num_requests}")
