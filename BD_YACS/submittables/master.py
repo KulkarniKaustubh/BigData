@@ -62,8 +62,9 @@ class Task:
 		return temp
 
 class Job:
-	def __init__(self, job_id):
+	def __init__(self, job_id): #, job_priority):
 		self.job_id = job_id
+		# self.job_priority = job_priority
 		self.map_tasks = []
 		self.reduce_tasks = []
 		self.map_tasks_done = 0 #count number of map_task.done == True
@@ -228,7 +229,7 @@ def listen_to_requests(): # listens for job service requests
 		mssg = json.loads(message)
 		connectionSocket.shutdown(SHUT_RDWR)
 		connectionSocket.close()
-		j = Job(mssg['job_id']) #init a job
+		j = Job(mssg['job_id']) #, mssg['job_priority']) #init a job 
 		for maps_i in mssg['map_tasks']:
 			j.map_tasks.append(Task(maps_i['task_id'], maps_i['duration'])) #append all map_tasks of a job, by initing task
 		for reds_i in mssg['reduce_tasks']:
