@@ -1,6 +1,6 @@
-# Big Data Course
+# Big Data
 
-All assignments for the Big Data course arranged in respective folders.
+All assignments done as a part of the Big Data course (UE18CS322) at PES University.
 
 - [x] Assignment 1
 - [x] Assignment 2
